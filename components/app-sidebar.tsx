@@ -17,38 +17,31 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+const items = [
+  { title: "Overview",           url: "/dashboard",              icon: Home },
+  { title: "Produk Es Krim",     url: "/dashboard/products",     icon: IceCream },
+  { title: "Riwayat Transaksi",  url: "/dashboard/transactions", icon: ReceiptText },
+  { title: "Buka POS (Kasir)",   url: "/kasir",                  icon: Store },
+];
 
 export function AppSidebar() {
   const router = useRouter();
   const pathname = usePathname();
-
   const [userName, setUserName] = React.useState("Tamu");
   const [userEmail, setUserEmail] = React.useState("Memuat...");
 
   React.useEffect(() => {
-    const fetchUser = async () => {
+    (async () => {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) return;
-      
       const email = authData.user.email || "";
       let name = email.split("@")[0] || "User";
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("name, email")
-        .eq("id", authData.user.id)
-        .single();
-        
-      if (profile) {
-        if (profile.name) name = profile.name;
-        // Use auth email if profile email is somehow absent
-      }
-      
+      const { data: profile } = await supabase.from("profiles").select("name, email").eq("id", authData.user.id).single();
+      if (profile?.name) name = profile.name;
       setUserName(name);
-      setUserEmail(profile?.email || email || "");
-    };
-    fetchUser();
+      setUserEmail(profile?.email || email);
+    })();
   }, []);
 
   const handleLogout = async () => {
@@ -56,62 +49,47 @@ export function AppSidebar() {
     router.push("/login");
   };
 
-  const items = [
-    {
-      title: "Overview",
-      url: "/dashboard",
-      icon: Home,
-    },
-    {
-      title: "Produk Es Krim",
-      url: "/dashboard/products",
-      icon: IceCream,
-    },
-    {
-      title: "Riwayat Transaksi",
-      url: "/dashboard/transactions",
-      icon: ReceiptText,
-    },
-    {
-      title: "Buka POS (Kasir)",
-      url: "/kasir",
-      icon: Store,
-    },
-  ];
-
   return (
-    <Sidebar className="border-r border-border/50 bg-background/50 backdrop-blur-xl">
-      <SidebarHeader className="border-b border-border/40 p-6">
+    <Sidebar
+      className="border-r border-white/[0.06] bg-[oklch(0.06_0_0)]"
+      style={{ boxShadow: "inset -1px 0 0 rgba(255,255,255,0.04)" }}
+    >
+      {/* Logo */}
+      <SidebarHeader className="px-4 py-5 border-b border-white/[0.06]">
         <div className="flex items-center gap-3">
-          <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-chart-1 text-white shadow-lg animate-pulse-glow">
-            <IceCream className="size-6" />
+          <div className="h-9 w-9 bg-white rounded-xl flex items-center justify-center shrink-0">
+            <IceCream className="h-5 w-5 text-black" />
           </div>
-          <div className="flex flex-col gap-0.5 leading-none">
-            <span className="text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-primary to-chart-1">ICE HMJ Tekinfo</span>
-            <span className="text-xs font-medium text-muted-foreground">Sales Monitor</span>
+          <div>
+            <p className="text-sm font-bold text-white tracking-tight leading-none">ICE HMJ</p>
+            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mt-0.5">Tekinfo</p>
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent className="p-4">
+
+      {/* Nav */}
+      <SidebarContent className="px-2 py-4 bg-[oklch(0.06_0_0)] flex-1">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Menu Utama</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[9px] font-bold uppercase tracking-[0.20em] text-white/20 mb-2 px-2">
+            Menu Utama
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {items.map((item) => {
                 const isActive = pathname === item.url;
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
+                    <SidebarMenuButton
                       isActive={isActive}
-                      className={`h-11 rounded-full transition-all duration-300 ${
-                        isActive 
-                          ? "bg-primary/10 text-primary font-bold shadow-sm" 
-                          : "hover:bg-primary/5 hover:text-primary font-medium text-muted-foreground"
+                      className={`h-10 rounded-xl transition-all duration-150 ${
+                        isActive
+                          ? "bg-white text-black font-bold"
+                          : "text-white/40 hover:text-white/80 hover:bg-white/[0.05] font-medium"
                       }`}
                       render={
-                        <a href={item.url} className="flex items-center gap-3 px-3">
-                          <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
-                          <span>{item.title}</span>
+                        <a href={item.url} className="flex items-center gap-3 px-3 w-full">
+                          <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? "text-black" : "text-white/35"}`} />
+                          <span className="text-[13px]">{item.title}</span>
                         </a>
                       }
                     />
@@ -122,18 +100,27 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-border/40 p-4 bg-secondary/30">
-        <div className="flex items-center justify-between w-full rounded-2xl bg-background/80 p-3 shadow-sm border border-border/50 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9 border border-primary/20 bg-primary/10 overflow-hidden flex items-center justify-center">
-              <span className="font-bold text-primary uppercase">{userName.substring(0, 2)}</span>
-            </Avatar>
-            <div className="flex flex-col text-sm">
-              <span className="font-bold text-foreground truncate max-w-[100px]">{userName}</span>
-              <span className="text-[10px] text-muted-foreground truncate max-w-[100px]">{userEmail}</span>
+
+      {/* User footer */}
+      <SidebarFooter className="border-t border-white/[0.06] p-3">
+        <div
+          className="flex items-center justify-between w-full rounded-xl px-3 py-2.5"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="h-8 w-8 rounded-xl bg-white/[0.07] flex items-center justify-center shrink-0 border border-white/[0.10]">
+              <span className="text-xs font-bold text-white/60">{userName.substring(0, 2).toUpperCase()}</span>
+            </div>
+            <div className="flex flex-col overflow-hidden min-w-0">
+              <span className="text-[13px] font-semibold text-white/75 truncate leading-tight">{userName}</span>
+              <span className="text-[10px] text-white/25 truncate leading-tight">{userEmail}</span>
             </div>
           </div>
-          <button onClick={handleLogout} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-2 rounded-full transition-colors flex-shrink-0">
+          <button
+            onClick={handleLogout}
+            className="text-white/25 hover:text-white/70 p-1.5 rounded-lg transition-colors hover:bg-white/[0.06] shrink-0"
+            title="Keluar"
+          >
             <LogOut className="h-4 w-4" />
           </button>
         </div>

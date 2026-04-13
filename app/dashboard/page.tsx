@@ -2,413 +2,544 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
-import { Coins, ShoppingBag, IceCream, TrendingUp } from "lucide-react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Coins, ShoppingBag, IceCream, TrendingUp,
+  ArrowUpRight, CalendarDays, User,
+} from "lucide-react";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Cell,
 } from "recharts";
 
-interface TransactionItem {
-  quantity: number;
-  products: { name: string } | null;
-}
-
+/* ─── Types ─── */
+interface TransactionItem { quantity: number; products: { name: string } | null; }
 interface Transaction {
-  id: string;
-  created_at: string;
-  total_amount: number;
-  payment_method: string;
+  id: string; created_at: string; total_amount: number; payment_method: string;
+  profiles: { name: string } | null;
   transaction_items: TransactionItem[];
 }
+interface ChartEntry { name: string; sales: number; label: string; }
 
-interface TrxData {
-  created_at: string;
-  total_amount: number;
-  payment_method: string;
-  transaction_items: { quantity: number }[];
-}
+type Period = "daily" | "weekly" | "monthly";
 
-interface ChartDataEntry {
-  name: string;
-  sales: number;
-  dateString: string;
-}
+/* ─── Helpers ─── */
+const fmt      = (n: number) => n.toLocaleString("id-ID");
+const fmtShort = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}Jt` : n >= 1_000 ? `${(n / 1_000).toFixed(0)}K` : `${n}`;
 
-export default function Dashboard() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [recentTrx, setRecentTrx] = useState<Transaction[]>([]);
-  
-  // Real data states
-  const [todayRevenue, setTodayRevenue] = useState(0);
-  const [todayTrxCount, setTodayTrxCount] = useState(0);
-  const [todayItemsSold, setTodayItemsSold] = useState(0);
-  const [favMethodText, setFavMethodText] = useState("Belum ada");
-  const [favMethodPercent, setFavMethodPercent] = useState(0);
-  const [dynamicChartData, setDynamicChartData] = useState<ChartDataEntry[]>([]);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        router.push("/login");
-        return;
-      }
-
-      // 1. Fetch recent 5 transactions for the list
-      const { data: trxList } = await supabase
-        .from('transactions')
-        .select(`
-          id,
-          created_at,
-          total_amount,
-          payment_method,
-          transaction_items (
-            quantity,
-            products (name)
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (trxList) {
-        setRecentTrx(trxList as unknown as Transaction[]);
-      }
-
-      // 2. Fetch last 7 days aggregation data
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setHours(0, 0, 0, 0);
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-
-      const { data: trxData } = await supabase
-        .from('transactions')
-        .select(`
-          created_at,
-          total_amount,
-          payment_method,
-          transaction_items (
-            quantity
-          )
-        `)
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .order('created_at', { ascending: true }); // Ascending for chart
-
-      // Initial chart data array for the last 7 days
-      const daysStr = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
-      const chartMap = new Map();
-      
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(sevenDaysAgo);
-        d.setDate(d.getDate() + i);
-        const dateKey = d.toISOString().split('T')[0];
-        chartMap.set(dateKey, { 
-          name: daysStr[d.getDay()], 
-          sales: 0,
-          dateString: dateKey
-        });
-      }
-
-      let rev = 0;
-      let count = 0;
-      let items = 0;
-      let qris = 0;
-      let cash = 0;
-
-      // To handle local time vs UTC, we rely on local date strings matching
-      const todayStr = new Date().toISOString().split('T')[0];
-
-      if (trxData) {
-        (trxData as unknown as TrxData[]).forEach((t) => {
-          const tDate = new Date(t.created_at);
-          const dateKey = tDate.toISOString().split('T')[0];
-          
-          // Chart aggregation
-          if (chartMap.has(dateKey)) {
-            const entry = chartMap.get(dateKey);
-            entry.sales += t.total_amount;
-          }
-
-          // Today aggregation
-          if (dateKey === todayStr) {
-            rev += t.total_amount;
-            count += 1;
-            
-            if (t.payment_method === 'qris') qris++;
-            else cash++;
-
-            if (t.transaction_items) {
-              t.transaction_items.forEach((item) => {
-                items += item.quantity || 0;
-              });
-            }
-          }
-        });
-      }
-
-      setDynamicChartData(Array.from(chartMap.values()));
-      setTodayRevenue(rev);
-      setTodayTrxCount(count);
-      setTodayItemsSold(items);
-
-      if (count > 0) {
-        const isQris = qris >= cash;
-        setFavMethodText(isQris ? 'QRIS' : 'Tunai');
-        setFavMethodPercent(Math.round(((isQris ? qris : cash) / count) * 100));
-      }
-
-      setLoading(false);
-    };
-
-    fetchDashboardData();
-  }, [router]);
-
-  // Format time util
-  const timeAgo = (dateStr: string) => {
-    const diff = new Date().getTime() - new Date(dateStr).getTime();
-    const min = Math.floor(diff / 60000);
-    if (min < 60) return `${min}m yll`;
-    const hr = Math.floor(min / 60);
-    if (hr < 24) return `${hr}j yll`;
-    return `${Math.floor(hr / 24)}h yll`;
-  };
-
-  if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+/* ─── Stat Card ─── */
+function StatCard({ title, value, sub, icon: Icon }: {
+  title: string; value: string; sub: string; icon: React.ElementType;
+}) {
+  return (
+    <div className="group rounded-2xl border border-white/[0.07] bg-white/[0.025] hover:bg-white/[0.04] hover:border-white/[0.12] transition-all duration-300 p-5">
+      <div className="flex items-start justify-between mb-4">
+        <span className="text-[9px] font-semibold text-white/30 uppercase tracking-[0.15em]">{title}</span>
+        <div className="h-7 w-7 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center group-hover:bg-white/[0.08] transition-all">
+          <Icon className="h-3.5 w-3.5 text-white/35 group-hover:text-white/70 transition-colors" />
+        </div>
       </div>
-    );
+      <p className="text-[1.6rem] font-bold text-white tracking-tight leading-none mb-2">{value}</p>
+      <p className="text-[10px] text-white/25">{sub}</p>
+    </div>
+  );
+}
+
+/* ─── Custom Tooltip ─── */
+function ChartTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="p-3 rounded-xl shadow-2xl min-w-[150px]"
+      style={{ background: "rgba(18,18,18,0.97)", border: "1px solid rgba(255,255,255,0.10)", backdropFilter: "blur(20px)" }}>
+      <p className="text-[9px] text-white/30 uppercase tracking-wider mb-1">{payload[0]?.payload?.label}</p>
+      <p className="text-base font-bold text-white">Rp {fmt(Number(payload[0]?.value || 0))}</p>
+    </div>
+  );
+}
+
+/* ─── Period Tabs ─── */
+function PeriodTabs({ value, onChange }: { value: Period; onChange: (p: Period) => void }) {
+  const tabs: { key: Period; label: string }[] = [
+    { key: "daily",   label: "Harian"  },
+    { key: "weekly",  label: "Mingguan" },
+    { key: "monthly", label: "Bulanan" },
+  ];
+  return (
+    <div className="flex items-center border border-white/[0.07] rounded-2xl overflow-hidden bg-white/[0.02] p-1 gap-1">
+      {tabs.map(t => (
+        <button key={t.key} onClick={() => onChange(t.key)}
+          className={`h-8 px-4 rounded-xl text-[11px] font-semibold transition-all ${
+            value === t.key ? "bg-white text-black" : "text-white/35 hover:text-white/70"
+          }`}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Build chart data ─── */
+function buildChartData(transactions: Transaction[], period: Period): ChartEntry[] {
+  const now = new Date();
+
+  if (period === "daily") {
+    // Last 7 days
+    const days = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    const map = new Map<string, ChartEntry>();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      const key = d.toISOString().split("T")[0];
+      map.set(key, { name: days[d.getDay()], sales: 0, label: key });
+    }
+    transactions.forEach(t => {
+      const key = new Date(t.created_at).toISOString().split("T")[0];
+      if (map.has(key)) map.get(key)!.sales += t.total_amount;
+    });
+    return Array.from(map.values());
   }
 
+  if (period === "weekly") {
+    // Last 4 weeks (Mon–Sun)
+    const entries: ChartEntry[] = [];
+    for (let w = 3; w >= 0; w--) {
+      const wStart = new Date(now);
+      wStart.setDate(wStart.getDate() - wStart.getDay() + 1 - w * 7); // Monday
+      wStart.setHours(0, 0, 0, 0);
+      const wEnd = new Date(wStart);
+      wEnd.setDate(wEnd.getDate() + 6);
+      wEnd.setHours(23, 59, 59, 999);
+
+      const weekLabel = `${wStart.getDate()}/${wStart.getMonth() + 1}`;
+      const sales = transactions
+        .filter(t => { const d = new Date(t.created_at); return d >= wStart && d <= wEnd; })
+        .reduce((s, t) => s + t.total_amount, 0);
+      entries.push({ name: `W${4 - w}`, sales, label: `Minggu ${weekLabel}` });
+    }
+    return entries;
+  }
+
+  // Monthly: last 6 months
+  const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+  const entries: ChartEntry[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const sales = transactions
+      .filter(t => {
+        const td = new Date(t.created_at);
+        return td.getFullYear() === year && td.getMonth() === month;
+      })
+      .reduce((s, t) => s + t.total_amount, 0);
+    entries.push({ name: months[month], sales, label: `${months[month]} ${year}` });
+  }
+  return entries;
+}
+
+/* ─── Compute period stats ─── */
+function getPeriodRange(period: Period) {
+  const now = new Date();
+  if (period === "daily") {
+    const start = new Date(now); start.setHours(0, 0, 0, 0);
+    return { start, label: "Hari Ini" };
+  }
+  if (period === "weekly") {
+    const start = new Date(now);
+    start.setDate(start.getDate() - start.getDay() + 1);
+    start.setHours(0, 0, 0, 0);
+    return { start, label: "Minggu Ini" };
+  }
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  return { start, label: "Bulan Ini" };
+}
+
+/* ─────────────── MAIN ─────────────── */
+export default function Dashboard() {
+  const [loading, setLoading]       = useState(true);
+  const [allTrx, setAllTrx]         = useState<Transaction[]>([]);
+  const [period, setPeriod]         = useState<Period>("daily");
+  const [now, setNow]               = useState(new Date());
+  const [topStaff, setTopStaff]     = useState<{ name: string; total: number; count: number }[]>([]);
+
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
+
+  useEffect(() => {
+    (async () => {
+      // Auth is already verified by AdminGuard in layout
+
+      // Fetch 6 months of data
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+      // Step 1: Fetch transactions
+      const { data: trxRaw } = await supabase
+        .from("transactions")
+        .select("id, created_at, total_amount, payment_method, staff_id, transaction_items(quantity, products(name))")
+        .gte("created_at", sixMonthsAgo.toISOString())
+        .order("created_at", { ascending: false });
+
+      if (!trxRaw) { setLoading(false); return; }
+
+      // Step 2: Fetch profiles for all unique staff_ids
+      const staffIds = [...new Set(trxRaw.map((t: any) => t.staff_id).filter(Boolean))];
+      const { data: profilesRaw } = staffIds.length > 0
+        ? await supabase.from("profiles").select("id, name").in("id", staffIds)
+        : { data: [] };
+
+      const profileMap = new Map((profilesRaw || []).map((p: any) => [p.id, p.name]));
+
+      // Step 3: Merge
+      const merged: Transaction[] = (trxRaw as any[]).map(t => ({
+        ...t,
+        profiles: profileMap.has(t.staff_id) ? { name: profileMap.get(t.staff_id)! } : null,
+      }));
+
+      if (merged) {
+        setAllTrx(merged);
+
+        // Top staff by revenue (all time)
+        const staffMap = new Map<string, { total: number; count: number }>();
+        merged.forEach(t => {
+          const name = t.profiles?.name || "Tidak diketahui";
+          const prev = staffMap.get(name) || { total: 0, count: 0 };
+          staffMap.set(name, { total: prev.total + t.total_amount, count: prev.count + 1 });
+        });
+        const sorted = Array.from(staffMap.entries())
+          .sort((a, b) => b[1].total - a[1].total)
+          .slice(0, 5)
+          .map(([name, v]) => ({ name, ...v }));
+        setTopStaff(sorted);
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  // Compute period data
+  const { start: periodStart, label: periodLabel } = getPeriodRange(period);
+  const periodTrx = allTrx.filter(t => new Date(t.created_at) >= periodStart);
+
+  const periodRevenue   = periodTrx.reduce((s, t) => s + t.total_amount, 0);
+  const periodCount     = periodTrx.length;
+  const periodItems     = periodTrx.reduce((s, t) => s + t.transaction_items.reduce((a, i) => a + i.quantity, 0), 0);
+  const periodQris      = periodTrx.filter(t => t.payment_method === "qris").length;
+  const periodAvg       = periodCount > 0 ? Math.round(periodRevenue / periodCount) : 0;
+  const favMethod       = periodCount === 0 ? "—" : periodQris >= (periodCount - periodQris) ? "QRIS" : "Tunai";
+
+  const chartData = buildChartData(allTrx, period);
+  const chartTotal = chartData.reduce((s, d) => s + d.sales, 0);
+
+  // Top products in period
+  const productMap = new Map<string, number>();
+  periodTrx.forEach(t =>
+    t.transaction_items.forEach(i => {
+      const name = i.products?.name || "Lainnya";
+      productMap.set(name, (productMap.get(name) || 0) + i.quantity);
+    })
+  );
+  const topProducts = Array.from(productMap.entries())
+    .sort((a, b) => b[1] - a[1]).slice(0, 5)
+    .map(([name, qty]) => ({ name, qty }));
+
+  // Recent 5 transactions
+  const recentTrx = allTrx.slice(0, 5);
+
+  const timeAgo = (d: string) => {
+    const min = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+    if (min < 60) return `${min}m lalu`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}j lalu`;
+    return `${Math.floor(hr / 24)}h lalu`;
+  };
+
+  if (loading) return (
+    <div className="flex h-full items-center justify-center min-h-[60vh]">
+      <div className="h-4 w-4 animate-spin rounded-full border border-white/20 border-t-white/80" />
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Overview Penjualan</h2>
-        <p className="text-muted-foreground">
-          Ringkasan aktivitas penjualan toko es krim hari ini dari database riil.
-        </p>
+    <div className="space-y-7 pb-16 max-w-[1400px]">
+
+      {/* ── Header ── */}
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-xl font-bold text-white/90 tracking-tight">Dashboard Admin</h2>
+          <p className="text-xs text-white/30 mt-0.5">
+            {now.toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-2xl font-mono font-bold text-white/80 tabular-nums tracking-tight">
+            {now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+          </p>
+          <div className="flex items-center justify-end gap-1.5 mt-0.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-white/50 animate-[dot-pulse_2s_ease-in-out_infinite]" />
+            <span className="text-[9px] text-white/25 uppercase tracking-widest">Live</span>
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics" disabled>Analytics</TabsTrigger>
-          <TabsTrigger value="reports" disabled>Reports</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="group hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 border-border/50 bg-card/60 backdrop-blur-xl overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Coins className="h-16 w-16 text-primary animate-pulse-glow" />
-              </div>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Pendapatan Hari Ini
-                </CardTitle>
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Coins className="h-4 w-4 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-primary to-chart-1">Rp {(todayRevenue / 1000).toLocaleString("id-ID")}k</div>
-                <p className="text-xs text-muted-foreground font-medium mt-1">
-                  Total pemasukan terkini
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="group hover:-translate-y-1 hover:shadow-xl hover:shadow-chart-1/20 transition-all duration-300 border-border/50 bg-card/60 backdrop-blur-xl overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <ShoppingBag className="h-16 w-16 text-chart-1" />
-              </div>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Transaksi
-                </CardTitle>
-                <div className="h-8 w-8 rounded-full bg-chart-1/10 flex items-center justify-center">
-                  <ShoppingBag className="h-4 w-4 text-chart-1" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-extrabold text-foreground">{todayTrxCount}</div>
-                <p className="text-xs text-muted-foreground font-medium mt-1">
-                  Jumlah pesanan sukses
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="group hover:-translate-y-1 hover:shadow-xl hover:shadow-chart-3/20 transition-all duration-300 border-border/50 bg-card/60 backdrop-blur-xl overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <IceCream className="h-16 w-16 text-chart-3" />
-              </div>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Es Krim Terjual
-                </CardTitle>
-                <div className="h-8 w-8 rounded-full bg-chart-3/10 flex items-center justify-center">
-                  <IceCream className="h-4 w-4 text-chart-3" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-extrabold text-foreground">{todayItemsSold}</div>
-                <p className="text-xs text-muted-foreground font-medium mt-1">
-                  Porsi es krim laku hari ini
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="group hover:-translate-y-1 hover:shadow-xl hover:shadow-chart-4/20 transition-all duration-300 border-border/50 bg-card/60 backdrop-blur-xl overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <TrendingUp className="h-16 w-16 text-chart-4" />
-              </div>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Pembayaran Terfavorit
-                </CardTitle>
-                <div className="h-8 w-8 rounded-full bg-chart-4/10 flex items-center justify-center">
-                  <TrendingUp className="h-4 w-4 text-chart-4" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-extrabold text-foreground uppercase">{favMethodText}</div>
-                <p className="text-xs text-muted-foreground font-medium mt-1">
-                  {favMethodPercent}% dari total transaksi
-                </p>
-              </CardContent>
-            </Card>
+      {/* ── Period selector + summary banner ── */}
+      <div
+        className="rounded-2xl border border-white/[0.07] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5"
+        style={{ background: "rgba(255,255,255,0.025)" }}
+      >
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarDays className="h-3.5 w-3.5 text-white/30" />
+            <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Laporan</span>
           </div>
+          <p className="text-sm font-bold text-white/80">{periodLabel}</p>
+          <p className="text-[10px] text-white/25 mt-0.5">
+            {periodCount} transaksi · {periodItems} item terjual
+          </p>
+        </div>
+        <div className="flex items-center gap-6 flex-wrap">
+          <div className="text-right">
+            <p className="text-[9px] text-white/25 uppercase tracking-widest">Total Pendapatan</p>
+            <p className="text-2xl font-bold text-white tabular-nums tracking-tight">Rp {fmt(periodRevenue)}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[9px] text-white/25 uppercase tracking-widest">Rata-rata/Trx</p>
+            <p className="text-lg font-bold text-white/70 tabular-nums">Rp {fmt(periodAvg)}</p>
+          </div>
+          <PeriodTabs value={period} onChange={setPeriod} />
+        </div>
+      </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4 border-border/50 bg-card/60 backdrop-blur-xl shadow-lg shadow-background/50">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold">Grafik Pendapatan (7 Hari Terakhir)</CardTitle>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <div className="h-[300px] w-full mt-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={dynamicChartData}
-                      margin={{
-                        top: 5,
-                        right: 10,
-                        left: -20,
-                        bottom: 0,
-                      }}
-                    >
-                      <defs>
-                        <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                      <XAxis 
-                        dataKey="name" 
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                        dy={10}
-                      />
-                      <YAxis 
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(value) => `Rp ${value / 1000}k`}
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                      />
-                      <RechartsTooltip 
-                        formatter={(value) => [`Rp ${Number(value).toLocaleString("id-ID")}`, "Pendapatan"]}
-                        labelFormatter={(label, payload) => {
-                           if(payload && payload.length > 0) {
-                             return payload[0].payload.dateString;
-                           }
-                           return label;
-                        }}
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: 'var(--radius)',
-                          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="sales"
-                        stroke="hsl(var(--primary))"
-                        fillOpacity={1}
-                        fill="url(#colorSales)"
-                        strokeWidth={4}
-                        activeDot={{ r: 8, strokeWidth: 0, fill: "hsl(var(--primary))" }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="col-span-3 border-border/50 bg-card/60 backdrop-blur-xl shadow-lg shadow-background/50">
-              <CardHeader className="pb-3 border-b border-border/30">
-                <CardTitle className="text-xl font-bold">Transaksi Terbaru</CardTitle>
-                <CardDescription>
-                  Data faktur terbaru dari seluruh kasir.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="space-y-6">
-                  {recentTrx.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/20 rounded-xl rounded-xl border border-dashed border-border">
-                      <IceCream className="h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-sm font-medium text-muted-foreground">Belum ada transaksi.</p>
-                    </div>
-                  ) : (
-                    recentTrx.map((trx) => (
-                      <div key={trx.id} className="flex items-center group p-2 -mx-2 rounded-xl hover:bg-muted/50 transition-colors">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-chart-1/20 flex items-center justify-center border border-border/50">
-                          {trx.payment_method === 'qris' ? (
-                            <span className="text-xs font-bold text-primary">QR</span>
-                          ) : (
-                            <span className="text-xs font-bold text-chart-1">RP</span>
-                          )}
-                        </div>
-                        <div className="ml-4 flex-1 space-y-1">
-                          <p className="text-sm font-bold leading-none">
-                            Trx #{trx.id.substring(0, 8).toUpperCase()}
-                          </p>
-                          <p className="text-sm text-muted-foreground line-clamp-1 pr-4">
-                            {trx.transaction_items.map((ti) => `${ti.quantity}x ${ti.products?.name}`).join(", ")}
-                          </p>
-                        </div>
-                        <div className="ml-auto text-right">
-                          <p className="text-sm font-extrabold text-foreground bg-secondary/50 px-3 py-1 rounded-full border border-border/50">
-                            +Rp {Number(trx.total_amount).toLocaleString("id-ID")}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {timeAgo(trx.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+      {/* ── Stat cards ── */}
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Pendapatan" value={`Rp ${fmtShort(periodRevenue)}`} sub={`Total ${periodLabel.toLowerCase()}`} icon={Coins} />
+        <StatCard title="Transaksi"  value={`${periodCount}`}               sub={`Pesanan ${periodLabel.toLowerCase()}`} icon={ShoppingBag} />
+        <StatCard title="Item Terjual" value={`${periodItems} pcs`}         sub={`Produk ${periodLabel.toLowerCase()}`}  icon={IceCream} />
+        <StatCard title="Metode Favorit" value={favMethod}                  sub={periodCount > 0 ? `${periodQris}× QRIS · ${periodCount - periodQris}× Tunai` : "Belum ada data"} icon={TrendingUp} />
+      </div>
+
+      {/* ── Chart + Top Staff ── */}
+      <div className="grid gap-4 lg:grid-cols-7">
+
+        {/* Area chart */}
+        <div className="lg:col-span-5 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h3 className="text-sm font-semibold text-white/80">
+                Grafik Penjualan · {period === "daily" ? "7 Hari" : period === "weekly" ? "4 Minggu" : "6 Bulan"} Terakhir
+              </h3>
+              <p className="text-[10px] text-white/25 mt-0.5">Pendapatan dalam Rupiah</p>
+            </div>
+            <span className="text-xs font-bold text-white/70 bg-white/[0.06] border border-white/[0.08] rounded-lg px-2.5 py-1 tabular-nums">
+              Rp {fmt(chartTotal)}
+            </span>
           </div>
-        </TabsContent>
-      </Tabs>
+          <div className="h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor="rgba(255,255,255,0.15)" />
+                    <stop offset="100%" stopColor="rgba(255,255,255,0.00)" />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(255,255,255,0.04)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false}
+                  tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10, fontFamily: "inherit" }} dy={8} />
+                <YAxis axisLine={false} tickLine={false} width={50}
+                  tickFormatter={v => v === 0 ? "0" : fmtShort(v)}
+                  tick={{ fill: "rgba(255,255,255,0.20)", fontSize: 10, fontFamily: "inherit" }} />
+                <RechartsTooltip
+                  cursor={{ stroke: "rgba(255,255,255,0.07)", strokeWidth: 1, strokeDasharray: "4 4" }}
+                  content={<ChartTooltip />}
+                />
+                <Area type="monotone" dataKey="sales"
+                  stroke="rgba(255,255,255,0.55)" strokeWidth={1.5}
+                  fill="url(#areaGrad)" dot={false}
+                  activeDot={{ r: 4, fill: "#fff", stroke: "rgba(255,255,255,0.2)", strokeWidth: 6 }}
+                  animationDuration={800} animationEasing="ease-out"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          {/* Min bar below chart */}
+          <div className="flex justify-between mt-3 px-1">
+            {chartData.map(d => (
+              <div key={d.label} className="flex flex-col items-center gap-1 flex-1">
+                <div className="h-0.5 w-6 rounded-full mx-auto"
+                  style={{ background: d.sales > 0 ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.05)" }} />
+                <span className="text-[8px] text-white/20 tabular-nums text-center">
+                  {d.sales > 0 ? fmtShort(d.sales) : "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Staff */}
+        <div className="lg:col-span-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 flex flex-col">
+          <div className="flex items-center gap-2 mb-5">
+            <User className="h-3.5 w-3.5 text-white/30" />
+            <h3 className="text-sm font-semibold text-white/80">Performa Kasir</h3>
+          </div>
+          {topStaff.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-xs text-white/20">Belum ada data</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {topStaff.map((s, i) => {
+                const maxTotal = topStaff[0].total;
+                const pct = Math.round((s.total / maxTotal) * 100);
+                return (
+                  <div key={s.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[9px] font-mono text-white/20 shrink-0 w-3">{i + 1}</span>
+                        <div className="h-5 w-5 rounded-md bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
+                          <span className="text-[7px] font-bold text-white/50">{s.name.substring(0,2).toUpperCase()}</span>
+                        </div>
+                        <span className="text-[11px] font-semibold text-white/60 truncate">{s.name}</span>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-[10px] font-bold text-white/70 tabular-nums">{fmtShort(s.total)}</p>
+                        <p className="text-[8px] text-white/25">{s.count}×</p>
+                      </div>
+                    </div>
+                    <div className="h-0.5 bg-white/[0.04] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: i === 0 ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.18)" }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Period detail: Recent + Top Products ── */}
+      <div className="grid gap-4 lg:grid-cols-2">
+
+        {/* Recent in period */}
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] overflow-hidden">
+          <div className="px-5 pt-5 pb-4 border-b border-white/[0.06] flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-white/80">Transaksi Terbaru</h3>
+              <p className="text-[10px] text-white/25 mt-0.5">5 pesanan terakhir</p>
+            </div>
+            <a href="/dashboard/transactions" className="text-[10px] text-white/25 hover:text-white/60 transition-colors border border-white/[0.06] rounded-lg px-2.5 py-1">
+              Lihat semua →
+            </a>
+          </div>
+          <div className="p-3 space-y-0.5">
+            {recentTrx.length === 0 ? (
+              <div className="flex flex-col items-center py-10 gap-2">
+                <IceCream className="h-6 w-6 text-white/10" />
+                <p className="text-xs text-white/20">Belum ada transaksi</p>
+              </div>
+            ) : recentTrx.map(trx => (
+              <div key={trx.id} className="flex items-center gap-3 px-2.5 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors group cursor-default">
+                {/* Method icon */}
+                <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 border text-[9px] font-bold ${
+                  trx.payment_method === "qris"
+                    ? "border-white/15 bg-white/[0.06] text-white/60"
+                    : "border-white/[0.06] bg-white/[0.02] text-white/30"
+                }`}>
+                  {trx.payment_method === "qris" ? "QR" : "Rp"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  {/* Staff name */}
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[9px] font-semibold text-white/40 uppercase tracking-wide">
+                      {trx.profiles?.name || "—"}
+                    </span>
+                    <span className="text-[8px] text-white/15">·</span>
+                    <span className="text-[9px] text-white/20">{timeAgo(trx.created_at)}</span>
+                  </div>
+                  <p className="text-[10px] text-white/50 truncate group-hover:text-white/75 transition-colors">
+                    {trx.transaction_items.map(ti => `${ti.quantity}× ${ti.products?.name}`).join(", ")}
+                  </p>
+                </div>
+                <span className="text-xs font-bold text-white/70 shrink-0 tabular-nums">
+                  +{fmtShort(trx.total_amount)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Products in period */}
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 flex flex-col">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-sm font-semibold text-white/80">Produk Terlaris</h3>
+              <p className="text-[10px] text-white/25 mt-0.5">{periodLabel}</p>
+            </div>
+            <span className="text-[9px] text-white/20 border border-white/[0.06] rounded-lg px-2 py-0.5">
+              {topProducts.reduce((s, p) => s + p.qty, 0)} item
+            </span>
+          </div>
+          {topProducts.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-2 py-10">
+              <IceCream className="h-6 w-6 text-white/10" />
+              <p className="text-xs text-white/20">Tidak ada data untuk periode ini</p>
+            </div>
+          ) : (
+            <div className="space-y-4 flex-1">
+              {topProducts.map((p, i) => {
+                const maxQty = topProducts[0].qty;
+                const pct = Math.round((p.qty / maxQty) * 100);
+                return (
+                  <div key={p.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="text-[9px] font-mono text-white/20 w-3 shrink-0">{i + 1}</span>
+                        <span className="text-xs text-white/60 truncate">{p.name}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-white/70 tabular-nums shrink-0">{p.qty} pcs</span>
+                    </div>
+                    <div className="h-0.5 bg-white/[0.04] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: i === 0 ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.18)" }} />
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Bar chart */}
+              {topProducts.length > 1 && (
+                <div className="pt-3 border-t border-white/[0.05]">
+                  <div className="h-[100px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={topProducts} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                        <XAxis dataKey="name" axisLine={false} tickLine={false}
+                          tick={{ fill: "rgba(255,255,255,0.20)", fontSize: 9 }}
+                          tickFormatter={n => n.length > 8 ? n.substring(0, 8) + "…" : n} />
+                        <RechartsTooltip
+                          cursor={{ fill: "rgba(255,255,255,0.03)" }}
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="px-2.5 py-1.5 rounded-lg text-xs"
+                                style={{ background: "rgba(18,18,18,0.97)", border: "1px solid rgba(255,255,255,0.10)" }}>
+                                <p className="text-white/70 font-bold">{payload[0].payload.name}: {payload[0].value} pcs</p>
+                              </div>
+                            );
+                          }}
+                        />
+                        <Bar dataKey="qty" radius={[4, 4, 0, 0]} maxBarSize={32}>
+                          {topProducts.map((_, i) => (
+                            <Cell key={i} fill={i === 0 ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.18)"} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

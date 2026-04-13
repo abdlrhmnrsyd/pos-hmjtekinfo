@@ -1,91 +1,155 @@
+"use client";
+
 import Link from "next/link";
-import { ArrowRight, IceCream, Star, ShieldCheck, Zap } from "lucide-react";
+import { ArrowRight, IceCream, ShieldCheck, Zap, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+
+const anim = (delay = 0) => ({
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] },
+});
+
+const features = [
+  {
+    icon: Zap,
+    title: "Transaksi Cepat",
+    desc: "Proses pesanan dalam hitungan detik. Mendukung QRIS dan tunai secara real-time.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Data Aman",
+    desc: "Autentikasi Supabase dengan enkripsi penuh. Semua data tersimpan aman di cloud.",
+    featured: true,
+  },
+  {
+    icon: BarChart3,
+    title: "Analitik Lengkap",
+    desc: "Grafik pendapatan harian, produk terlaris, ringkasan — semuanya dalam satu layar.",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen bg-background overflow-hidden selection:bg-primary/30">
-      {/* Animated Background Blobs */}
-      <div className="absolute top-0 -left-4 w-72 h-72 bg-primary/30 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
-      <div className="absolute top-0 -right-4 w-72 h-72 bg-chart-1/30 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob" style={{ animationDelay: "2s" }}></div>
-      <div className="absolute -bottom-8 left-20 w-72 h-72 bg-secondary/40 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob" style={{ animationDelay: "4s" }}></div>
+    <div className="relative min-h-screen bg-[oklch(0.06_0_0)] overflow-hidden">
+      {/* Subtle top-center gradient glow */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)" }}
+      />
+      <div
+        className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full"
+        style={{ background: "radial-gradient(ellipse, rgba(255,255,255,0.04) 0%, transparent 70%)" }}
+      />
 
-      <div className="relative z-10">
-        {/* Navigation */}
-        <nav className="flex items-center justify-between px-6 py-6 max-w-7xl mx-auto backdrop-blur-sm border-b border-border/40">
-          <div className="flex items-center gap-2">
-            <div className="h-10 w-10 flex items-center justify-center bg-gradient-to-br from-primary to-chart-1 rounded-xl shadow-lg animate-pulse-glow">
-              <IceCream className="h-6 w-6 text-white" />
+      <div className="relative z-10 flex flex-col min-h-screen max-w-5xl mx-auto px-6">
+        {/* ── Nav ── */}
+        <motion.nav
+          {...anim(0)}
+          className="flex items-center justify-between py-6"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center">
+              <IceCream className="h-4 w-4 text-black" />
             </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-chart-1">
-              ICE HMJ Tekinfo
-            </span>
+            <span className="text-sm font-semibold text-white tracking-tight">ICE HMJ Tekinfo</span>
           </div>
+
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link href="/login" className="text-xs text-white/40 hover:text-white/80 transition-colors hidden sm:block">
               Masuk
             </Link>
             <Link href="/login">
-              <Button className="rounded-full shadow-lg hover:shadow-primary/25 transition-all">
-                Mulai Gratis
-              </Button>
+              <button className="h-8 px-4 rounded-lg bg-white text-black text-xs font-semibold hover:bg-white/90 transition-colors">
+                Mulai
+              </button>
             </Link>
           </div>
-        </nav>
+        </motion.nav>
 
-        {/* Hero Section */}
-        <main className="flex flex-col items-center justify-center px-6 pt-20 pb-24 text-center max-w-5xl mx-auto animate-float-slow">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
-            <Star className="h-4 w-4" /> Solusi UMKM Kekinian
-          </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
-            Manajemen Es Krim <br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-chart-1 to-primary bg-[length:200%_auto] animate-[pulse_3s_ease-in-out_infinite]">Lebih Manis</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-12 leading-relaxed">
-            Sistem Kasir (POS) modern dengan visual memukau, transaksi kilat, dan analitik lengkap. 
-            Tingkatkan omset toko es krimmu tanpa pusing memikirkan pembukuan.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+        {/* ── Hero ── */}
+        <main className="flex-1 flex flex-col items-center justify-center text-center pt-12 pb-24">
+          {/* Badge */}
+          <motion.div {...anim(0.05)} className="mb-7">
+            <span className="inline-flex items-center gap-2 h-7 px-3 rounded-full border border-white/10 text-[10px] font-medium text-white/50 tracking-wide uppercase">
+              <span className="h-1 w-1 rounded-full bg-white/60 animate-[dot-pulse_2s_ease-in-out_infinite]" />
+              Point of Sale · ICE HMJ
+            </span>
+          </motion.div>
+
+          {/* Headline */}
+          <motion.h1
+            {...anim(0.12)}
+            className="text-5xl sm:text-6xl md:text-7xl font-bold text-white tracking-tight leading-[1.05] mb-5"
+          >
+            Sistem Kasir untuk<br />
+            <span className="text-white/40">Toko Es Krim</span>
+          </motion.h1>
+
+          {/* Sub */}
+          <motion.p
+            {...anim(0.2)}
+            className="max-w-md text-sm text-white/35 leading-relaxed mb-10"
+          >
+            Kelola penjualan, produk, dan laporan keuangan — semua dalam satu
+            dashboard yang bersih dan cepat.
+          </motion.p>
+
+          {/* CTA */}
+          <motion.div {...anim(0.27)} className="flex items-center gap-3 flex-wrap justify-center">
             <Link href="/login">
-              <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-base rounded-full gap-2 shadow-xl shadow-primary/20 hover:scale-105 transition-transform duration-300">
-                Buka Toko Sekarang <ArrowRight className="h-5 w-5" />
-              </Button>
+              <button className="h-11 px-7 rounded-xl bg-white text-black text-sm font-semibold hover:bg-white/90 transition-all flex items-center gap-2 hover:gap-3">
+                Buka Kasir
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
             </Link>
             <Link href="/kasir">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto h-14 px-8 text-base rounded-full backdrop-blur-md bg-background/50 hover:bg-secondary/50 transition-colors">
-                Lihat Demo Kasir
-              </Button>
+              <button className="h-11 px-7 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:border-white/20 hover:text-white/80 transition-all">
+                Lihat Demo
+              </button>
             </Link>
-          </div>
+          </motion.div>
         </main>
 
-        {/* Features Grid */}
-        <div className="max-w-7xl mx-auto px-6 py-24 border-t border-border/40 bg-background/50 backdrop-blur-3xl">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 rounded-3xl bg-gradient-to-br from-card to-secondary border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-              <div className="h-12 w-12 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-6 text-blue-500">
-                <Zap className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Transaksi Kilat</h3>
-              <p className="text-muted-foreground">Proses pesanan pelanggan dalam hitungan detik. Mendukung metode pembayaran QRIS & Tunai.</p>
-            </div>
-            <div className="p-8 rounded-3xl bg-gradient-to-br from-card to-secondary border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 text-primary">
-                <ShieldCheck className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Keamanan Data</h3>
-              <p className="text-muted-foreground">Didukung oleh Supabase Database dan Autentikasi canggih. Data Anda aman 24/7 di cloud.</p>
-            </div>
-            <div className="p-8 rounded-3xl bg-gradient-to-br from-card to-secondary border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-              <div className="h-12 w-12 rounded-2xl bg-chart-1/10 flex items-center justify-center mb-6 text-chart-1">
-                <Star className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Analitik Interaktif</h3>
-              <p className="text-muted-foreground">Pantau produk terlaris dan grafik pendapatan harian langsung dari Dashboard modern yang cantik.</p>
-            </div>
+        {/* ── Features ── */}
+        <section className="pb-20">
+          <div className="border-t border-white/[0.06] pt-14 grid md:grid-cols-3 gap-4">
+            {features.map((f, i) => (
+              <motion.div
+                key={f.title}
+                {...anim(0.1 + i * 0.08)}
+                className={`rounded-2xl p-6 transition-all duration-300 group relative overflow-hidden ${
+                  f.featured
+                    ? "bg-white/[0.06] border border-white/12"
+                    : "bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04]"
+                }`}
+              >
+                {f.featured && (
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded-2xl"
+                    style={{ background: "radial-gradient(ellipse at 30% 0%, rgba(255,255,255,0.05) 0%, transparent 60%)" }}
+                  />
+                )}
+                <div
+                  className={`relative h-9 w-9 rounded-xl flex items-center justify-center mb-5 ${
+                    f.featured ? "bg-white text-black" : "bg-white/[0.06] text-white/60"
+                  }`}
+                >
+                  <f.icon className="h-4 w-4" />
+                </div>
+                <h3 className="relative text-sm font-semibold text-white mb-2">{f.title}</h3>
+                <p className="relative text-xs text-white/35 leading-relaxed">{f.desc}</p>
+              </motion.div>
+            ))}
           </div>
-        </div>
+        </section>
+
+        {/* ── Footer ── */}
+        <footer className="border-t border-white/[0.06] py-6 flex items-center justify-between">
+          <span className="text-xs text-white/20">© 2025 ICE HMJ Tekinfo</span>
+          <span className="text-xs text-white/15">POS System</span>
+        </footer>
       </div>
     </div>
   );

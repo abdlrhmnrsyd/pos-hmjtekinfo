@@ -3,360 +3,223 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Plus, Edit, Trash2, IceCream, Image as ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image_url: string;
-  is_active: boolean;
-}
+interface Product { id: string; name: string; price: number; image_url: string; is_active: boolean; }
+
+const surface = "rounded-2xl border border-white/[0.07] bg-white/[0.02]";
+const inputCls = "w-full h-10 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-white/25 focus:bg-white/[0.05] transition-all";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Form State
-  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading]   = useState(true);
+  const [isOpen, setIsOpen]     = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    price: 0,
-    image_url: ""
-  });
-  const [saving, setSaving] = useState(false);
-  
-  // Image Upload State
+  const [formData, setFormData] = useState({ name: "", price: 0, image_url: "" });
+  const [saving, setSaving]     = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
-
+    const { data } = await supabase.from("products").select("*").order("created_at", { ascending: false });
     if (data) setProducts(data);
     setLoading(false);
   };
+  useEffect(() => { fetchProducts(); }, []);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchProducts();
-  }, []);
-
-  const toggleStatus = async (id: string, currentStatus: boolean) => {
-    await supabase.from("products").update({ is_active: !currentStatus }).eq("id", id);
+  const toggleStatus = async (id: string, cur: boolean) => {
+    await supabase.from("products").update({ is_active: !cur }).eq("id", id);
     fetchProducts();
   };
 
   const deleteProduct = async (id: string) => {
-    if(!confirm("Yakin ingin menghapus produk ini?")) return;
-    
+    if (!confirm("Yakin ingin menghapus produk ini?")) return;
     const { error } = await supabase.from("products").delete().eq("id", id);
-    
     if (error) {
-      if (error.code === '23503') {
-        alert("Produk ini tidak bisa dihapus karena sudah pernah terjual dan tercatat di riwayat transaksi. Sebaiknya matikan saja statusnya (klik tombol centang hijau) agar tidak tampil di Kasir.");
-      } else {
-        alert(`Gagal menghapus produk: ${error.message}`);
-      }
+      if (error.code === "23503") alert("Produk tidak bisa dihapus karena sudah pernah terjual. Nonaktifkan saja.");
+      else alert(`Gagal menghapus: ${error.message}`);
       return;
     }
-    
     fetchProducts();
   };
 
-  const handleOpenCreate = () => {
-    setEditingId(null);
-    setFormData({ name: "", price: 0, image_url: "" });
-    setImageFile(null);
-    setImagePreviewUrl("");
-    setIsOpen(true);
-  };
-
-  const handleOpenEdit = (p: Product) => {
-    setEditingId(p.id);
-    setFormData({ name: p.name, price: p.price, image_url: p.image_url || "" });
-    setImageFile(null);
-    setImagePreviewUrl("");
-    setIsOpen(true);
-  };
+  const handleOpenCreate = () => { setEditingId(null); setFormData({ name: "", price: 0, image_url: "" }); setImageFile(null); setImagePreviewUrl(""); setIsOpen(true); };
+  const handleOpenEdit   = (p: Product) => { setEditingId(p.id); setFormData({ name: p.name, price: p.price, image_url: p.image_url || "" }); setImageFile(null); setImagePreviewUrl(""); setIsOpen(true); };
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (saving) return;
-    setSaving(true);
-    
+    e.preventDefault(); if (saving) return; setSaving(true);
     try {
       let finalImageUrl = formData.image_url;
-
       if (imageFile) {
         setUploadingImage(true);
-        const fileExt = imageFile.name.split('.').pop() || 'png';
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("products")
-          .upload(fileName, imageFile, { upsert: true });
-
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
-          // @ts-ignore (status is present on StorageApiError)
-          alert(`Gagal mengupload gambar. Status: ${uploadError.status || uploadError.statusCode || 'Unknown'}\nPesan: ${uploadError.message}`);
-          setSaving(false);
-          setUploadingImage(false);
-          return;
-        }
-        
-        const { data: publicUrlData } = supabase.storage.from("products").getPublicUrl(fileName);
-        finalImageUrl = publicUrlData.publicUrl;
+        const ext = imageFile.name.split(".").pop() || "png";
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from("products").upload(fileName, imageFile, { upsert: true });
+        if (uploadError) { alert(`Gagal upload: ${uploadError.message}`); setSaving(false); setUploadingImage(false); return; }
+        const { data: urlData } = supabase.storage.from("products").getPublicUrl(fileName);
+        finalImageUrl = urlData.publicUrl;
         setUploadingImage(false);
       }
-
-      if (editingId) {
-        const { error } = await supabase.from("products").update({
-          name: formData.name,
-          price: formData.price,
-          image_url: finalImageUrl
-        }).eq("id", editingId);
-        
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("products").insert([{
-          name: formData.name,
-          price: formData.price,
-          image_url: finalImageUrl
-        }]);
-        
-        if (error) throw error;
-      }
-      
-      setIsOpen(false);
-      fetchProducts();
-    } catch (err: any) {
-      console.error(err);
-      alert(`Terjadi kesalahan saat menyimpan data produk.\nPesan: ${err?.message || JSON.stringify(err)}`);
-    } finally {
-      setSaving(false);
-    }
+      const payload = { name: formData.name, price: formData.price, image_url: finalImageUrl };
+      const { error } = editingId
+        ? await supabase.from("products").update(payload).eq("id", editingId)
+        : await supabase.from("products").insert([payload]);
+      if (error) throw error;
+      setIsOpen(false); fetchProducts();
+    } catch (err: any) { alert(`Gagal menyimpan: ${err?.message}`); }
+    finally { setSaving(false); }
   };
 
   return (
-    <div className="space-y-6 relative">
-      <div className="absolute top-1/2 right-0 w-80 h-80 bg-chart-1/5 rounded-full blur-[100px] pointer-events-none -translate-x-1/4 translate-y-1/4 hidden md:block"></div>
-      
-      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 pb-12">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-chart-1">Katalog Produk</h2>
-          <p className="text-muted-foreground font-medium mt-1">Kelola daftar es krim yang dijual di toko.</p>
+          <h2 className="text-lg font-bold text-white/90 tracking-tight">Katalog Produk</h2>
+          <p className="text-xs text-white/25 mt-0.5">Kelola produk yang tersedia di sistem kasir.</p>
         </div>
-        <Button className="gap-2 bg-gradient-to-r from-primary to-chart-1 hover:shadow-lg hover:shadow-primary/20 hover:scale-105 transition-all w-fit" onClick={handleOpenCreate}>
-          <Plus className="h-4 w-4" /> Tambah Produk
-        </Button>
+        <button onClick={handleOpenCreate}
+          className="flex items-center gap-2 h-9 px-4 rounded-xl bg-white text-black text-xs font-semibold hover:bg-white/90 transition-all w-fit">
+          <Plus className="h-3.5 w-3.5" /> Tambah Produk
+        </button>
       </div>
 
-      <Card className="border-border/50 bg-card/60 backdrop-blur-xl shadow-xl shadow-background/50 overflow-hidden relative z-10">
-        <CardHeader className="border-b border-border/30 bg-muted/20">
-          <CardTitle className="text-xl">Daftar Es Krim</CardTitle>
-          <CardDescription>Semua produk yang tersedia di sistem Kasir saat ini.</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">Gambar</TableHead>
-                <TableHead>Nama Produk</TableHead>
-                <TableHead>Harga</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">Loading data...</TableCell>
-                </TableRow>
-              ) : products.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">Belum ada produk terdaftar.</TableCell>
-                </TableRow>
-              ) : (
-                products.map((p) => (
-                  <TableRow key={p.id} className="hover:bg-muted/50 transition-colors group">
-                    <TableCell>
-                      <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-chart-1/10 overflow-hidden border border-border/50 group-hover:border-primary/30 transition-colors">
-                        {p.image_url ? (
-                          <img src={p.image_url} alt={p.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                        ) : (
-                          <div className="h-full w-full flex items-center justify-center text-xl">🍦</div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell>Rp {p.price.toLocaleString("id-ID")}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${p.is_active ? 'bg-green-500/20 text-green-500' : 'bg-destructive/20 text-destructive'}`}>
-                        {p.is_active ? 'Aktif' : 'Nonaktif'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="icon" title="Edit Produk" onClick={() => handleOpenEdit(p)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="icon" title="Ubah Aktif" onClick={() => toggleStatus(p.id, p.is_active)}>
-                          <IceCream className={`h-4 w-4 ${p.is_active ? "" : "opacity-30"}`} />
-                        </Button>
-                        <Button variant="outline" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteProduct(p.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Modern Dialog UI */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <form onSubmit={handleSave}>
-            <DialogHeader>
-              <DialogTitle>{editingId ? "Edit Produk Es Krim" : "Tambah Es Krim Baru"}</DialogTitle>
-              <DialogDescription>
-                Isi data form di bawah ini untuk menyimpan item ke katalog POS.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nama Es Krim</Label>
-                <div className="relative">
-                  <IceCream className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="name"
-                    required
-                    placeholder="E.g. Strawberry Splash"
-                    className="pl-9"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="price">Harga (Rp)</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground font-medium">Rp</span>
-                  <Input
-                    id="price"
-                    type="number"
-                    required
-                    min={0}
-                    placeholder="15000"
-                    className="pl-9"
-                    value={formData.price || ""}
-                    onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <Label>Foto Es Krim</Label>
-                
-                <div className="flex gap-4 items-center">
-                  <div className="relative h-24 w-24 rounded-xl overflow-hidden border border-border bg-muted flex items-center justify-center shrink-0 shadow-sm">
-                    {(imagePreviewUrl || formData.image_url) ? (
-                      <img 
-                        src={imagePreviewUrl || formData.image_url} 
-                        alt="Preview" 
-                        className="w-full h-full object-cover" 
-                        onError={(e) => Object.assign(e.currentTarget.style, {display: 'none'})}
-                      />
-                    ) : (
-                      <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
-                    )}
+      {/* Table card */}
+      <div className={surface}>
+        <div className="p-5 border-b border-white/[0.06]">
+          <p className="text-sm font-semibold text-white/80">Daftar Produk</p>
+          <p className="text-[10px] text-white/25 mt-0.5">Semua produk yang tersedia di sistem kasir.</p>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-white/[0.05] hover:bg-transparent">
+              <TableHead className="h-10 px-5 text-[9px] font-semibold text-white/25 uppercase tracking-widest w-[60px]">Foto</TableHead>
+              <TableHead className="h-10 text-[9px] font-semibold text-white/25 uppercase tracking-widest">Nama</TableHead>
+              <TableHead className="h-10 text-[9px] font-semibold text-white/25 uppercase tracking-widest">Harga</TableHead>
+              <TableHead className="h-10 text-[9px] font-semibold text-white/25 uppercase tracking-widest">Status</TableHead>
+              <TableHead className="h-10 text-right px-5 text-[9px] font-semibold text-white/25 uppercase tracking-widest">Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow className="border-white/[0.04] hover:bg-transparent">
+                <TableCell colSpan={5} className="text-center h-32">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="h-3.5 w-3.5 border border-white/20 border-t-white/70 rounded-full animate-spin" />
+                    <span className="text-xs text-white/30">Memuat...</span>
                   </div>
-                  
-                  <div className="flex-1 space-y-3">
-                    {/* File Upload Variant */}
-                    <div>
-                      <Input
-                        id="image-file"
-                        type="file"
-                        accept="image/*"
-                        className="cursor-pointer file:text-primary file:font-semibold file:bg-primary/10 file:border-0 hover:file:bg-primary/20 text-sm h-10"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setImageFile(file);
-                            setImagePreviewUrl(URL.createObjectURL(file));
-                          }
-                        }}
-                      />
-                    </div>
+                </TableCell>
+              </TableRow>
+            ) : products.length === 0 ? (
+              <TableRow className="border-white/[0.04] hover:bg-transparent">
+                <TableCell colSpan={5} className="text-center h-32">
+                  <p className="text-xs text-white/20">Belum ada produk. Tambah produk pertama Anda.</p>
+                </TableCell>
+              </TableRow>
+            ) : products.map(p => (
+              <TableRow key={p.id} className="border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
+                <TableCell className="px-5 py-3">
+                  <div className="h-9 w-9 rounded-xl overflow-hidden border border-white/[0.06] bg-white/[0.02] group-hover:border-white/15 transition-all">
+                    {p.image_url ? <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
+                      : <div className="h-full w-full flex items-center justify-center text-sm">🍦</div>}
+                  </div>
+                </TableCell>
+                <TableCell className="text-sm font-medium text-white/70">{p.name}</TableCell>
+                <TableCell className="text-sm font-semibold text-white/80">Rp {p.price.toLocaleString("id-ID")}</TableCell>
+                <TableCell>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border ${
+                    p.is_active ? "border-white/15 text-white/70 bg-white/[0.06]"
+                                : "border-white/[0.05] text-white/25 bg-transparent"
+                  }`}>
+                    <span className={`h-1 w-1 rounded-full ${p.is_active ? "bg-white/60" : "bg-white/20"}`} />
+                    {p.is_active ? "Aktif" : "Nonaktif"}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right px-5">
+                  <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <button onClick={() => handleOpenEdit(p)}
+                      className="h-7 w-7 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/[0.05] flex items-center justify-center transition-colors">
+                      <Edit className="h-3 w-3" />
+                    </button>
+                    <button onClick={() => toggleStatus(p.id, p.is_active)} title={p.is_active ? "Nonaktifkan" : "Aktifkan"}
+                      className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/[0.05] ${p.is_active ? "text-white/50" : "text-white/20 hover:text-white/40"}`}>
+                      <IceCream className="h-3 w-3" />
+                    </button>
+                    <button onClick={() => deleteProduct(p.id)}
+                      className="h-7 w-7 rounded-lg text-white/20 hover:text-red-400/60 hover:bg-red-400/5 flex items-center justify-center transition-colors">
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
-                    <div className="flex items-center gap-2 w-full">
-                      <div className="h-[1px] bg-border/60 flex-1"></div>
-                      <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest">Atau URL</span>
-                      <div className="h-[1px] bg-border/60 flex-1"></div>
-                    </div>
+      {/* Dialog */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent
+          className="sm:max-w-[420px] p-0 overflow-hidden rounded-2xl border-white/[0.08]"
+          style={{ background: "rgba(10,10,10,0.96)", backdropFilter: "blur(24px)", boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 24px 60px rgba(0,0,0,0.8)" }}
+        >
+          <form onSubmit={handleSave} className="p-6 space-y-5">
+            <DialogHeader>
+              <DialogTitle className="text-sm font-bold text-white/90">{editingId ? "Edit Produk" : "Tambah Produk"}</DialogTitle>
+              <p className="text-[10px] text-white/30">{editingId ? "Ubah detail produk." : "Isi detail produk baru."}</p>
+            </DialogHeader>
 
-                    {/* URL Variant */}
-                    <div className="relative">
-                      <ImageIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="url"
-                        placeholder="https://..."
-                        className="pl-9 h-10 text-sm"
-                        value={formData.image_url}
-                        onChange={(e) => {
-                          setFormData({ ...formData, image_url: e.target.value });
-                          setImageFile(null);
-                          setImagePreviewUrl("");
-                        }}
-                      />
+            <div className="space-y-3.5">
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-semibold text-white/30 uppercase tracking-wider">Nama Produk</label>
+                <input className={inputCls} required placeholder="Contoh: Vanilla Dream" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-semibold text-white/30 uppercase tracking-wider">Harga (Rp)</label>
+                <input className={inputCls} type="number" required min={0} placeholder="15000" value={formData.price || ""} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-semibold text-white/30 uppercase tracking-wider">Foto Produk</label>
+                <div className="flex gap-3 items-start">
+                  <div className="h-16 w-16 rounded-xl overflow-hidden border border-white/[0.07] bg-white/[0.02] flex items-center justify-center shrink-0">
+                    {(imagePreviewUrl || formData.image_url)
+                      ? <img src={imagePreviewUrl || formData.image_url} alt="Preview" className="w-full h-full object-cover" onError={e => Object.assign((e.currentTarget as HTMLImageElement).style, { display: "none" })} />
+                      : <ImageIcon className="h-5 w-5 text-white/15" />}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <Input type="file" accept="image/*"
+                      className="cursor-pointer file:text-[10px] file:font-medium file:text-white/50 file:bg-white/[0.05] file:border-0 hover:file:bg-white/[0.08] text-[10px] h-9 bg-transparent border border-white/[0.07] rounded-xl p-1.5 text-white/30"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) { setImageFile(f); setImagePreviewUrl(URL.createObjectURL(f)); } }} />
+                    <div className="flex items-center gap-2">
+                      <div className="h-px bg-white/[0.05] flex-1" />
+                      <span className="text-[9px] text-white/20">atau URL</span>
+                      <div className="h-px bg-white/[0.05] flex-1" />
                     </div>
+                    <input type="url" placeholder="https://..." className={inputCls + " h-9 text-xs"}
+                      value={formData.image_url}
+                      onChange={e => { setFormData({ ...formData, image_url: e.target.value }); setImageFile(null); setImagePreviewUrl(""); }} />
                   </div>
                 </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+
+            <DialogFooter className="flex gap-2 pt-1">
+              <button type="button" onClick={() => setIsOpen(false)}
+                className="h-9 px-4 rounded-xl text-xs font-medium text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-colors">
                 Batal
-              </Button>
-              <Button type="submit" disabled={saving || uploadingImage}>
-                {saving || uploadingImage ? "Menyimpan..." : "Simpan Perubahan"}
-              </Button>
+              </button>
+              <button type="submit" disabled={saving || uploadingImage}
+                className="h-9 px-5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-white/90 transition-all disabled:opacity-50">
+                {saving || uploadingImage ? "Menyimpan..." : "Simpan"}
+              </button>
             </DialogFooter>
           </form>
         </DialogContent>

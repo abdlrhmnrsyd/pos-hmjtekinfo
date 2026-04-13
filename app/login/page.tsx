@@ -3,293 +3,162 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { LogIn, Loader2, Lock, Mail, UserPlus } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, IceCream } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
-  // Hidden register state
   const [showRegister, setShowRegister] = useState(false);
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regName, setRegName] = useState("");
+  const [success, setSuccess] = useState<string | null>(null);
   const [secretClicks, setSecretClicks] = useState(0);
 
   const handleSecretClick = () => {
-    const newClicks = secretClicks + 1;
-    setSecretClicks(newClicks);
-    if (newClicks >= 5) {
-      setShowRegister(true);
-      setSecretClicks(0);
-    }
+    const n = secretClicks + 1;
+    setSecretClicks(n);
+    if (n >= 5) { setShowRegister(true); setSecretClicks(0); }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
+    setLoading(true); setError(null);
     try {
-      if (!name) {
-        setError("Nama harus diisi.");
-        setLoading(false);
-        return;
-      }
-
-      // Step 1: Find the email associated with this name from public profiles
+      if (!name) { setError("Nama harus diisi."); setLoading(false); return; }
       const { data: profileList, error: findError } = await supabase
-        .from("profiles")
-        .select("email, role")
-        .ilike("name", name)
-        .limit(1);
-
-      if (findError || !profileList || profileList.length === 0 || !profileList[0].email) {
-        setError("Nama pengguna tidak ditemukan atau belum disandingkan dengan email (Silakan lapor kontak Admin).");
-        setLoading(false);
-        return;
+        .from("profiles").select("email, role").ilike("name", name).limit(1);
+      if (findError || !profileList?.length || !profileList[0].email) {
+        setError("Nama pengguna tidak ditemukan."); setLoading(false); return;
       }
-
-      const userEmail = profileList[0].email;
-
-      // Step 2: Sign in with the retrieved email
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: userEmail,
-        password,
+        email: profileList[0].email, password,
       });
-
-      if (authError) {
-        setError("Password salah untuk akun ini.");
-        setLoading(false);
-        return;
-      }
-
+      if (authError) { setError("Password salah."); setLoading(false); return; }
       if (!data.user) return;
-
-      if (profileList[0].role === "admin") {
-        router.push("/dashboard");
-      } else {
-        router.push("/kasir");
-      }
-    } catch {
-      setError("Terjadi kesalahan sistem saat login.");
-    } finally {
-      setLoading(false);
-    }
+      router.push(profileList[0].role === "admin" ? "/dashboard" : "/kasir");
+    } catch { setError("Terjadi kesalahan. Coba lagi."); } 
+    finally { setLoading(false); }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
+    setLoading(true); setError(null); setSuccess(null);
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name,
-          }
-        }
+        email: regEmail, password: regPassword, options: { data: { name: regName } }
       });
-
-      if (signUpError) {
-        setError(signUpError.message);
-        setLoading(false);
-        return;
-      }
-
-      // Automatically insert email into the profiles table bypass to ensure it maps correctly
-      if (data.user) {
-        await supabase.from("profiles").upsert({
-          id: data.user.id,
-          name: name,
-          email: email
-        });
-      }
-
+      if (signUpError) { setError(signUpError.message); return; }
+      if (data.user) await supabase.from("profiles").upsert({ id: data.user.id, name: regName, email: regEmail });
       if (data.user && data.session === null) {
-        setSuccess("Registrasi berhasil! Silakan periksa email Anda (jika wajib konfirmasi).");
-      } else {
-        setSuccess("Registrasi berhasil! Anda akan dialihkan...");
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 1500);
-      }
-      
-    } catch {
-      setError("Terjadi kesalahan sistem saat registrasi.");
-    } finally {
-      setLoading(false);
-    }
+        setSuccess("Akun dibuat! Cek email untuk konfirmasi.");
+      } else { setSuccess("Berhasil! Mengalihkan..."); setTimeout(() => { window.location.href = "/dashboard"; }, 1500); }
+    } catch { setError("Terjadi kesalahan saat mendaftar."); }
+    finally { setLoading(false); }
   };
 
+  const inputClass = "w-full h-10 bg-white/[0.04] border border-white/10 rounded-xl px-3.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all";
+
   return (
-    <div className="relative min-h-screen w-full overflow-hidden flex items-center justify-center bg-background px-4">
-      {/* Background Ornaments */}
-      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-primary/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse-glow"></div>
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-chart-1/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse-glow" style={{ animationDelay: "2s" }}></div>
-      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-chart-3/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse-glow" style={{ animationDelay: "4s" }}></div>
+    <div className="min-h-screen bg-[oklch(0.06_0_0)] flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Radial ambient */}
+      <div
+        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px]"
+        style={{ background: "radial-gradient(ellipse, rgba(255,255,255,0.04) 0%, transparent 70%)" }}
+      />
+      {/* Top line */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)" }}
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="z-10 w-full max-w-md"
-      >
-        <Card className="border-border/50 bg-background/60 backdrop-blur-xl shadow-2xl">
-          <CardHeader className="space-y-1 pb-4">
-            {/* The icon acts as the secret trigger for Register mode */}
-            <div 
-              className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-1 mb-2 shadow-lg cursor-pointer"
-              onClick={handleSecretClick}
-              title="Double tap for secret mode"
-            >
-              <span className="text-white text-3xl select-none">🍦</span>
-            </div>
-            <CardTitle className="text-3xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-primary to-chart-1">
-              {showRegister ? "Admin Register" : "ICE HMJ Tekinfo"}
-            </CardTitle>
-            <CardDescription className="text-center">
-              {showRegister ? "Halaman registrasi tersembunyi" : "Akses sistem menggunakan username/nama Anda."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            
-            {showRegister ? (
-              /* REGISTER MODE */
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reg-name">Nama Pengguna (Username)</Label>
-                  <div className="relative">
-                    <UserPlus className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="reg-name"
-                      type="text"
-                      placeholder="Contoh: Budi"
-                      className="pl-10"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-email">Email Autentikasi</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="reg-email"
-                      type="email"
-                      placeholder="nama@email.com"
-                      className="pl-10"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-password">Password Baru (min. 6 char)</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="reg-password"
-                      type="password"
-                      placeholder="••••••••"
-                      className="pl-10"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                </div>
+      <div className="relative z-10 w-full max-w-[340px]">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8 gap-3">
+          <button
+            onClick={handleSecretClick}
+            className="h-12 w-12 bg-white rounded-2xl flex items-center justify-center transition-all active:scale-95 hover:bg-white/90"
+          >
+            <IceCream className="h-6 w-6 text-black" />
+          </button>
+          <div className="text-center">
+            <h1 className="text-lg font-bold text-white tracking-tight">
+              {showRegister ? "Buat Akun" : "ICE HMJ Tekinfo"}
+            </h1>
+            <p className="text-xs text-white/30 mt-0.5">
+              {showRegister ? "Daftarkan akun kasir baru" : "Masuk ke sistem kasir"}
+            </p>
+          </div>
+        </div>
 
-                {error && <div className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md">{error}</div>}
-                {success && <div className="text-sm font-medium text-green-600 bg-green-500/10 p-3 rounded-md">{success}</div>}
+        {/* Card */}
+        <div
+          className="rounded-2xl p-6 relative overflow-hidden"
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.06)",
+          }}
+        >
+          {showRegister ? (
+            <form onSubmit={handleRegister} className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Nama</label>
+                <input className={inputClass} type="text" placeholder="Nama lengkap" value={regName} onChange={e => setRegName(e.target.value)} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Email</label>
+                <input className={inputClass} type="email" placeholder="nama@email.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Password</label>
+                <input className={inputClass} type="password" placeholder="Min. 6 karakter" value={regPassword} onChange={e => setRegPassword(e.target.value)} required minLength={6} />
+              </div>
 
-                <div className="flex flex-col gap-2 pt-2">
-                  <Button type="submit" variant="secondary" className="w-full" disabled={loading}>
-                    {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Memproses...</> : "Buat Akun Baru"}
-                  </Button>
-                  <Button type="button" variant="ghost" onClick={() => setShowRegister(false)} className="text-xs">
-                    Kembali ke Login
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              /* NORMAL LOGIN MODE */
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-name">Nama Pengguna</Label>
-                  <div className="relative">
-                    <UserPlus className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="login-name"
-                      type="text"
-                      placeholder="Tuliskan nama Anda"
-                      className="pl-10"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      className="pl-10"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
+              {error && <p className="text-xs text-red-400/80 border border-red-400/10 bg-red-400/5 rounded-lg p-2.5">{error}</p>}
+              {success && <p className="text-xs text-white/60 border border-white/10 bg-white/[0.04] rounded-lg p-2.5">{success}</p>}
 
-                {error && (
-                  <div className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md">
-                    {error}
-                  </div>
-                )}
+              <div className="pt-1 space-y-2">
+                <button type="submit" disabled={loading}
+                  className="w-full h-10 rounded-xl bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buat Akun"}
+                </button>
+                <button type="button" onClick={() => setShowRegister(false)}
+                  className="w-full text-xs text-white/25 hover:text-white/50 transition-colors py-1">
+                  ← Kembali ke halaman masuk
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleLogin} className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Nama</label>
+                <input className={inputClass} type="text" placeholder="Nama lengkap Anda" value={name} onChange={e => setName(e.target.value)} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Password</label>
+                <input className={inputClass} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
+              </div>
 
-                <Button type="submit" className="w-full mt-4" disabled={loading}>
-                  {loading ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Memproses...</>
-                  ) : (
-                    "Masuk ke Sistem"
-                  )}
-                </Button>
-              </form>
-            )}
-            
-          </CardContent>
-        </Card>
-      </motion.div>
+              {error && <p className="text-xs text-red-400/80 border border-red-400/10 bg-red-400/5 rounded-lg p-2.5">{error}</p>}
+
+              <div className="pt-1">
+                <button type="submit" disabled={loading}
+                  className="w-full h-10 rounded-xl bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Masuk"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+
+        <p className="text-center text-[10px] text-white/15 mt-6">ICE HMJ Tekinfo © 2025</p>
+      </div>
     </div>
   );
 }

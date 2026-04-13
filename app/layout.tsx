@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Premium sans-serif — modern, geometric, high-end feel
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -25,8 +29,8 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="id"
+      className={`dark ${jakarta.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <TooltipProvider>{children}</TooltipProvider>
