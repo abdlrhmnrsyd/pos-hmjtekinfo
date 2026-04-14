@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Home, IceCream, ReceiptText, Store, LogOut } from "lucide-react";
+import { Home, IceCream, ReceiptText, Store, LogOut, Users } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -22,6 +22,7 @@ const items = [
   { title: "Overview",           url: "/dashboard",              icon: Home },
   { title: "Produk Es Krim",     url: "/dashboard/products",     icon: IceCream },
   { title: "Riwayat Transaksi",  url: "/dashboard/transactions", icon: ReceiptText },
+  { title: "Daftar Pengguna",    url: "/dashboard/users",        icon: Users },
   { title: "Buka POS (Kasir)",   url: "/kasir",                  icon: Store },
 ];
 
