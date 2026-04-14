@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   ShoppingCart, Plus, Minus, Trash2, LogOut,
   CreditCard, Banknote, Search, CheckCircle2,
-  IceCream, X, Receipt, ChevronRight, LayoutDashboard,
+  IceCream, X, Receipt, ChevronRight, LayoutDashboard, UserCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
@@ -408,8 +408,8 @@ export default function KasirPage() {
         style={{ background: "rgba(6,6,6,0.90)", backdropFilter: "blur(16px)" }}
       >
         <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 bg-white rounded-xl flex items-center justify-center">
-            <IceCream className="h-4 w-4 text-black" />
+          <div className="h-8 w-8 rounded-xl overflow-hidden border border-white/[0.10] shrink-0">
+            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <p className="text-xs font-bold text-white/80 leading-tight">ICE HMJ Tekinfo</p>
@@ -426,6 +426,26 @@ export default function KasirPage() {
             <span className="text-xs font-semibold text-white/60">{staffName}</span>
             <span className="text-[9px] text-white/25">{isAdmin ? "Admin" : "Staff aktif"}</span>
           </div>
+
+          <Separator orientation="vertical" className="h-5 bg-white/[0.06] hidden sm:block" />
+
+          {/* Profile button — all users */}
+          <Link href="/profile">
+            <button
+              className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl border border-white/[0.10] text-white/50 hover:text-white/90 hover:bg-white/[0.06] hover:border-white/[0.20] transition-all text-xs font-semibold"
+              title="Lihat profil saya"
+            >
+              <UserCircle className="h-3.5 w-3.5" />
+              <span>Profil</span>
+            </button>
+            {/* Mobile: icon only */}
+            <button
+              className="flex sm:hidden h-8 w-8 items-center justify-center rounded-xl border border-white/[0.10] text-white/50 hover:text-white/90 hover:bg-white/[0.06] transition-all"
+              title="Profil Saya"
+            >
+              <UserCircle className="h-3.5 w-3.5" />
+            </button>
+          </Link>
 
           {/* Admin shortcut */}
           {isAdmin && (

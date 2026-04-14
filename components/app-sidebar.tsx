@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Home, IceCream, ReceiptText, Store, LogOut, Users } from "lucide-react";
+import { Home, IceCream, ReceiptText, Store, LogOut, Users, UserCircle } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -23,6 +23,7 @@ const items = [
   { title: "Produk Es Krim",     url: "/dashboard/products",     icon: IceCream },
   { title: "Riwayat Transaksi",  url: "/dashboard/transactions", icon: ReceiptText },
   { title: "Daftar Pengguna",    url: "/dashboard/users",        icon: Users },
+  { title: "Profil Saya",        url: "/profile",                icon: UserCircle },
   { title: "Buka POS (Kasir)",   url: "/kasir",                  icon: Store },
 ];
 
@@ -58,8 +59,8 @@ export function AppSidebar() {
       {/* Logo */}
       <SidebarHeader className="px-4 py-5 border-b border-white/[0.06]">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 bg-white rounded-xl flex items-center justify-center shrink-0">
-            <IceCream className="h-5 w-5 text-black" />
+          <div className="h-9 w-9 rounded-xl overflow-hidden shrink-0 border border-white/[0.10]">
+            <img src="/logo.jpg" alt="ICE HMJ Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <p className="text-sm font-bold text-white tracking-tight leading-none">ICE HMJ</p>

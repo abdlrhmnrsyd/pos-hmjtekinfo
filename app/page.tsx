@@ -21,10 +21,10 @@ export default function Home() {
       <div className="relative z-10 flex flex-col items-center gap-8">
         {/* Logo */}
         <div
-          className="h-16 w-16 bg-white rounded-2xl flex items-center justify-center"
+          className="h-16 w-16 rounded-2xl overflow-hidden border border-white/[0.12]"
           style={{ boxShadow: "0 0 40px rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.4)" }}
         >
-          <IceCream className="h-8 w-8 text-black" />
+          <img src="/logo.jpg" alt="HMJ Tekinfo Logo" className="w-full h-full object-cover" />
         </div>
 
         {/* Title */}

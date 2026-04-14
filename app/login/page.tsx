@@ -41,7 +41,7 @@ export default function LoginPage() {
       });
       if (authError) { setError("Password salah."); setLoading(false); return; }
       if (!data.user) return;
-      router.push(profileList[0].role === "admin" ? "/dashboard" : "/kasir");
+      router.push("/kasir");
     } catch { setError("Terjadi kesalahan. Coba lagi."); } 
     finally { setLoading(false); }
   };
@@ -82,9 +82,9 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-8 gap-3">
           <button
             onClick={handleSecretClick}
-            className="h-12 w-12 bg-white rounded-2xl flex items-center justify-center transition-all active:scale-95 hover:bg-white/90"
+            className="h-12 w-12 rounded-2xl overflow-hidden border border-white/[0.10] transition-all active:scale-95"
           >
-            <IceCream className="h-6 w-6 text-black" />
+            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </button>
           <div className="text-center">
             <h1 className="text-lg font-bold text-white tracking-tight">
