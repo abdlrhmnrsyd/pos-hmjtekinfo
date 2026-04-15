@@ -334,12 +334,41 @@ export default function KasirPage() {
 
   useEffect(() => {
     (async () => {
-      const { data: authData } = await supabase.auth.getUser();
-      if (!authData.user) { router.push("/login"); return; }
-      setUserId(authData.user.id);
-      const { data: profile } = await supabase.from("profiles").select("name, role").eq("id", authData.user.id).single();
-      setStaffName(profile?.name || authData.user.email?.split("@")[0] || "Staff");
+      // Small delay to allow Supabase to re-hydrate from localStorage
+      await new Promise(r => setTimeout(r, 500));
+
+      let { data: { user } } = await supabase.auth.getUser();
+
+      // Fallback: Check for cookies if user is null
+      if (!user) {
+        const getCookie = (name: string) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(";").shift();
+        };
+
+        const access = getCookie("sb-access-token");
+        const refresh = getCookie("sb-refresh-token");
+
+        if (access && refresh) {
+          const { data: { session } } = await supabase.auth.setSession({
+            access_token: access,
+            refresh_token: refresh
+          });
+          user = session?.user ?? null;
+        }
+      }
+
+      if (!user) { 
+        router.push("/login"); 
+        return; 
+      }
+      
+      setUserId(user.id);
+      const { data: profile } = await supabase.from("profiles").select("name, role").eq("id", user.id).single();
+      setStaffName(profile?.name || user.email?.split("@")[0] || "Staff");
       setIsAdmin(profile?.role === "admin");
+      
       const { data: pd } = await supabase.from("products").select("*").eq("is_active", true).order("name", { ascending: true });
       if (pd) setProducts(pd);
       setLoading(false);

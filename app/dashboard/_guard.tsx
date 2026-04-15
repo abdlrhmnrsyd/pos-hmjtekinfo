@@ -10,9 +10,33 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     (async () => {
+      // Small delay to allow Supabase to re-hydrate from localStorage
+      await new Promise(r => setTimeout(r, 500));
+
       // 1. Cek auth
-      const { data: authData } = await supabase.auth.getUser();
-      if (!authData.user) {
+      let { data: { user } } = await supabase.auth.getUser();
+      
+      // Fallback: Check if we have cookies but no user in memory
+      if (!user) {
+        const getCookie = (name: string) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(";").shift();
+        };
+
+        const access = getCookie("sb-access-token");
+        const refresh = getCookie("sb-refresh-token");
+
+        if (access && refresh) {
+          const { data: { session } } = await supabase.auth.setSession({
+            access_token: access,
+            refresh_token: refresh
+          });
+          user = session?.user ?? null;
+        }
+      }
+
+      if (!user) {
         router.replace("/login");
         return;
       }
@@ -21,11 +45,10 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
-        .eq("id", authData.user.id)
+        .eq("id", user.id)
         .single();
 
       if (profile?.role !== "admin") {
-        // Bukan admin → langsung ke kasir
         router.replace("/kasir");
         return;
       }
