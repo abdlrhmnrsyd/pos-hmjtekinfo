@@ -23,14 +23,14 @@ const fmt = (n: number) => n.toLocaleString("id-ID");
 /* ─── Qty Stepper ─── */
 function QtyControl({ qty, onInc, onDec }: { qty: number; onInc: () => void; onDec: () => void }) {
   return (
-    <div className="flex items-center border border-border/50 rounded-xl overflow-hidden bg-white/[0.02] surface-hover transition-colors">
+    <div className="flex items-center border border-border/50 rounded-xl overflow-hidden bg-foreground/[0.02] surface-hover transition-colors">
       <button onClick={onDec}
-        className="w-9 h-9 flex items-center justify-center text-muted-foreground/60 hover:text-white hover:bg-white/[0.06] transition-all active:scale-90">
+        className="w-9 h-9 flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] transition-all active:scale-90">
         <Minus className="h-3 w-3" />
       </button>
-      <span className="w-9 text-center text-sm font-bold text-white/85 tabular-nums select-none">{qty}</span>
+      <span className="w-9 text-center text-sm font-bold text-foreground/85 tabular-nums select-none">{qty}</span>
       <button onClick={onInc}
-        className="w-9 h-9 flex items-center justify-center text-muted-foreground/60 hover:text-white hover:bg-white/[0.06] transition-all active:scale-90">
+        className="w-9 h-9 flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] transition-all active:scale-90">
         <Plus className="h-3 w-3" />
       </button>
     </div>
@@ -81,14 +81,14 @@ function CartDrawer({
         {view === "success" ? (
           <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6 text-center">
             <div
-              className="h-20 w-20 bg-white rounded-3xl flex items-center justify-center"
-              style={{ boxShadow: "0 0 60px rgba(255,255,255,0.20)" }}
+              className="h-20 w-20 bg-primary rounded-3xl flex items-center justify-center"
+              style={{ boxShadow: "0 0 60px var(--foreground)" }}
             >
-              <CheckCircle2 className="h-10 w-10 text-black" />
+              <CheckCircle2 className="h-10 w-10 text-primary-foreground" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-white">Transaksi Berhasil!</h2>
-              <p className="text-sm text-white/40">
+              <h2 className="text-xl font-bold text-foreground">Transaksi Berhasil!</h2>
+              <p className="text-sm text-foreground/40">
                 Total <span className="text-foreground/70 font-semibold">Rp {fmt(totalAmount)}</span>
               </p>
               <p className="text-xs text-muted-foreground/25">
@@ -97,7 +97,7 @@ function CartDrawer({
             </div>
             <button
               onClick={onClose}
-              className="mt-4 h-11 px-8 rounded-2xl bg-white/[0.06] border border-border/50 text-sm text-foreground/60 hover:bg-white/[0.10] hover:text-foreground/80 transition-all"
+              className="mt-4 h-11 px-8 rounded-2xl bg-foreground/[0.06] border border-border/50 text-sm text-foreground/60 hover:bg-foreground/[0.10] hover:text-foreground/80 transition-all"
             >
               Tutup
             </button>
@@ -128,19 +128,19 @@ function CartDrawer({
                     onClick={() => setPayMethod(key)}
                     className={`relative h-32 rounded-2xl flex flex-col items-center justify-center gap-3 border transition-all duration-200 overflow-hidden ${
                       payMethod === key
-                        ? "bg-white text-black border-white"
-                        : "border-white/[0.08] text-white/40 hover:border-white/[0.18] hover:text-foreground/70 bg-white/[0.02] surface-hover transition-colors"
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-foreground/[0.08] text-foreground/40 hover:border-foreground/[0.18] hover:text-foreground/70 bg-foreground/[0.02] surface-hover transition-colors"
                     }`}
-                    style={payMethod === key ? { boxShadow: "0 8px 32px rgba(255,255,255,0.15)" } : undefined}
+                    style={payMethod === key ? { boxShadow: "0 8px 32px var(--foreground)" } : undefined}
                   >
                     {payMethod === key && (
                       <div className="absolute inset-0 rounded-2xl"
-                        style={{ background: "radial-gradient(ellipse at 30% 0%, rgba(0,0,0,0.04) 0%, transparent 60%)" }} />
+                        style={{ background: "radial-gradient(ellipse at 30% 0%, rgba(255,255,255,0.1) 0%, transparent 60%)" }} />
                     )}
                     <Icon className="h-7 w-7 relative" />
                     <div className="text-center relative">
-                      <p className={`text-sm font-bold ${payMethod === key ? "text-black" : ""}`}>{label}</p>
-                      <p className={`text-[9px] mt-0.5 ${payMethod === key ? "text-black/40" : "text-muted-foreground/40"}`}>{sub}</p>
+                      <p className={`text-sm font-bold ${payMethod === key ? "text-primary-foreground" : ""}`}>{label}</p>
+                      <p className={`text-[9px] mt-0.5 ${payMethod === key ? "text-primary-foreground/40" : "text-muted-foreground/40"}`}>{sub}</p>
                     </div>
                   </button>
                 ))}
@@ -148,13 +148,12 @@ function CartDrawer({
 
               {/* Order summary */}
               <div
-                className="rounded-2xl p-4 space-y-2.5"
-                style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)" }}
+                className="rounded-2xl p-4 space-y-2.5 bg-foreground/[0.02] border border-border/40"
               >
                 <p className="text-[9px] font-semibold text-muted-foreground/25 uppercase tracking-widest mb-3">Rincian Pesanan</p>
                 {cart.map(item => (
                   <div key={item.id} className="flex justify-between items-center">
-                    <span className="text-xs text-white/45 truncate max-w-[220px]">
+                    <span className="text-xs text-foreground/45 truncate max-w-[220px]">
                       <span className="text-muted-foreground/25 mr-1.5">{item.quantity}×</span>{item.name}
                     </span>
                     <span className="text-xs font-semibold text-foreground/60 tabular-nums shrink-0">
@@ -164,7 +163,7 @@ function CartDrawer({
                 ))}
                 <div className="border-t border-border/30 pt-2.5 mt-2.5 flex justify-between items-center">
                   <span className="text-sm font-bold text-foreground/60">Total</span>
-                  <span className="text-lg font-bold text-white tabular-nums">Rp {fmt(totalAmount)}</span>
+                  <span className="text-lg font-bold text-foreground tabular-nums">Rp {fmt(totalAmount)}</span>
                 </div>
               </div>
             </div>
@@ -173,8 +172,8 @@ function CartDrawer({
               <button
                 onClick={handleConfirm}
                 disabled={isProcessing}
-                className="w-full h-13 rounded-2xl bg-white text-black text-sm font-bold hover:bg-white/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2.5"
-                style={{ height: 52, boxShadow: "0 4px 24px rgba(255,255,255,0.12)" }}
+                className="w-full h-13 rounded-2xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2.5"
+                style={{ height: 52, boxShadow: "0 4px 24px var(--foreground)" }}
               >
                 <CheckCircle2 className="h-4 w-4" />
                 {isProcessing ? "Memproses..." : `Konfirmasi · Rp ${fmt(totalAmount)}`}
@@ -192,7 +191,7 @@ function CartDrawer({
                   <h2 className="text-sm font-bold text-foreground/90">Pesanan</h2>
                   {cart.length > 0 && (
                     <span
-                      className="h-5 px-2 rounded-full text-[10px] font-bold text-black bg-white flex items-center"
+                      className="h-5 px-2 rounded-full text-[10px] font-bold text-primary-foreground bg-primary flex items-center"
                     >
                       {totalItems}
                     </span>
@@ -206,7 +205,7 @@ function CartDrawer({
                     </button>
                   )}
                   <button onClick={onClose}
-                    className="h-7 w-7 flex items-center justify-center rounded-xl text-muted-foreground/25 hover:text-foreground/70 hover:bg-white/[0.06] transition-all">
+                    className="h-7 w-7 flex items-center justify-center rounded-xl text-muted-foreground/25 hover:text-foreground/70 hover:bg-foreground/[0.06] transition-all">
                     <X className="h-4 w-4" />
                   </button>
                 </div>
@@ -221,10 +220,9 @@ function CartDrawer({
               {cart.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full py-24 gap-4">
                   <div
-                    className="h-20 w-20 rounded-3xl flex items-center justify-center border"
-                    style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.07)" }}
+                    className="h-20 w-20 rounded-3xl flex items-center justify-center border border-border/40 bg-foreground/[0.02]"
                   >
-                    <ShoppingCart className="h-9 w-9 text-white/10" />
+                    <ShoppingCart className="h-9 w-9 text-foreground/10" />
                   </div>
                   <div className="text-center">
                     <p className="text-sm font-semibold text-muted-foreground/25">Keranjang masih kosong</p>
@@ -236,10 +234,10 @@ function CartDrawer({
                   {cart.map(item => (
                     <div
                       key={item.id}
-                      className="group flex gap-3.5 p-3 rounded-2xl hover:bg-white/[0.03] transition-colors"
+                      className="group flex gap-3.5 p-3 rounded-2xl hover:bg-foreground/[0.03] transition-colors"
                     >
                       {/* Thumbnail */}
-                      <div className="h-16 w-16 rounded-xl overflow-hidden shrink-0 border border-border/40 bg-white/[0.02] surface-hover transition-colors">
+                      <div className="h-16 w-16 rounded-xl overflow-hidden shrink-0 border border-border/40 bg-foreground/[0.02] surface-hover transition-colors">
                         {item.image_url
                           ? <img src={item.image_url} className="w-full h-full object-cover" alt="" />
                           : (
@@ -260,7 +258,7 @@ function CartDrawer({
                           </button>
                         </div>
                         <div className="flex items-center justify-between mt-2.5">
-                          <span className="text-sm font-bold text-white/85 tabular-nums">
+                          <span className="text-sm font-bold text-foreground/85 tabular-nums">
                             Rp {fmt(item.price * item.quantity)}
                           </span>
                           <QtyControl
@@ -289,18 +287,18 @@ function CartDrawer({
                     <span className="tabular-nums">Rp {fmt(totalAmount)}</span>
                   </div>
                   <div className="flex justify-between items-baseline">
-                    <span className="text-[10px] font-semibold text-muted-foreground/25 uppercase tracking-widest">Total</span>
-                    <span className="text-2xl font-bold text-white tabular-nums tracking-tight">
-                      Rp {fmt(totalAmount)}
-                    </span>
+                  <span className="text-[10px] font-semibold text-muted-foreground/25 uppercase tracking-widest">Total</span>
+                  <span className="text-lg font-bold text-foreground tabular-nums">
+                    Rp {fmt(totalAmount)}
+                  </span>
                   </div>
                 </div>
 
                 {/* CTA */}
                 <button
                   onClick={() => setView("payment")}
-                  className="w-full rounded-2xl font-bold text-black bg-white hover:bg-white/90 transition-all flex items-center justify-between px-5 group"
-                  style={{ height: 56, boxShadow: "0 4px 24px rgba(255,255,255,0.12)" }}
+                  className="w-full rounded-2xl font-bold text-primary-foreground bg-primary hover:opacity-90 transition-all flex items-center justify-between px-5 group"
+                  style={{ height: 56, boxShadow: "0 4px 24px var(--foreground)" }}
                 >
                   <div className="flex items-center gap-2.5">
                     <Receipt className="h-4 w-4" />
@@ -417,18 +415,18 @@ export default function KasirPage() {
           <p className="font-mono text-xs text-muted-foreground/30 tabular-nums hidden sm:block">
             {now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
           </p>
-          <Separator orientation="vertical" className="h-5 bg-white/[0.06] hidden sm:block" />
+          <Separator orientation="vertical" className="h-5 bg-foreground/[0.06] hidden sm:block" />
           <div className="hidden sm:flex flex-col items-end">
             <span className="text-xs font-semibold text-foreground/60">{staffName}</span>
             <span className="text-[9px] text-muted-foreground/25">{isAdmin ? "Admin" : "Staff aktif"}</span>
           </div>
 
-          <Separator orientation="vertical" className="h-5 bg-white/[0.06] hidden sm:block" />
+          <Separator orientation="vertical" className="h-5 bg-foreground/[0.06] hidden sm:block" />
 
           {/* Profile button — all users */}
           <Link href="/profile">
             <button
-              className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-white/[0.06] hover:border-white/[0.20] transition-all text-xs font-semibold"
+              className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-foreground/[0.06] hover:border-foreground/20 transition-all text-xs font-semibold"
               title="Lihat profil saya"
             >
               <UserCircle className="h-3.5 w-3.5" />
@@ -436,7 +434,7 @@ export default function KasirPage() {
             </button>
             {/* Mobile: icon only */}
             <button
-              className="flex sm:hidden h-8 w-8 items-center justify-center rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-white/[0.06] transition-all"
+              className="flex sm:hidden h-8 w-8 items-center justify-center rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-foreground/[0.06] transition-all"
               title="Profil Saya"
             >
               <UserCircle className="h-3.5 w-3.5" />
@@ -446,10 +444,10 @@ export default function KasirPage() {
           {/* Admin shortcut */}
           {isAdmin && (
             <>
-              <Separator orientation="vertical" className="h-5 bg-white/[0.06] hidden sm:block" />
+              <Separator orientation="vertical" className="h-5 bg-foreground/[0.06] hidden sm:block" />
               <Link href="/dashboard">
                 <button
-                  className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-white/[0.06] hover:border-white/[0.20] transition-all text-xs font-semibold"
+                  className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-foreground/[0.06] hover:border-foreground/20 transition-all text-xs font-semibold"
                   title="Buka halaman Admin"
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
@@ -457,7 +455,7 @@ export default function KasirPage() {
                 </button>
                 {/* Mobile: icon only */}
                 <button
-                  className="flex sm:hidden h-8 w-8 items-center justify-center rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-white/[0.06] transition-all"
+                  className="flex sm:hidden h-8 w-8 items-center justify-center rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-foreground/[0.06] transition-all"
                   title="Dashboard Admin"
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
@@ -485,7 +483,7 @@ export default function KasirPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40 group-focus-within:text-foreground/50 transition-colors pointer-events-none" />
           <input
             placeholder="Cari produk..."
-            className="w-full h-9 pl-8 pr-8 bg-white/[0.03] border border-border/40 rounded-xl text-xs text-foreground/70 placeholder:text-muted-foreground/40 outline-none focus:border-white/20 focus:bg-white/[0.05] transition-all"
+            className="w-full h-9 pl-8 pr-8 bg-foreground/[0.03] border border-border/40 rounded-xl text-xs text-foreground/70 placeholder:text-muted-foreground/40 outline-none focus:border-foreground/20 focus:bg-foreground/[0.05] transition-all"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
@@ -517,18 +515,17 @@ export default function KasirPage() {
                   onClick={() => addToCart(product)}
                   className={`overflow-hidden text-left rounded-2xl transition-all duration-200 active:scale-[0.96] group relative border ${
                     inCart
-                      ? "border-white/25 bg-white/[0.07]"
-                      : "border-border/30 bg-white/[0.02] surface-hover transition-colors hover:bg-white/[0.05] hover:border-white/[0.14]"
+                      ? "border-primary/50 bg-primary/[0.05]"
+                      : "border-border/30 bg-foreground/[0.02] surface-hover transition-colors hover:bg-foreground/[0.05] hover:border-foreground/[0.14]"
                   }`}
-                  style={inCart ? { boxShadow: "0 0 0 1px rgba(255,255,255,0.10)" } : undefined}
+                  style={inCart ? { boxShadow: "0 0 0 1px var(--primary)" } : undefined}
                 >
                   {/* Qty badge */}
                   {inCart && (
                     <div
-                      className="absolute top-2.5 left-2.5 z-30 h-6 w-6 bg-white rounded-full flex items-center justify-center"
-                      style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
+                      className="absolute top-2.5 left-2.5 z-30 h-6 w-6 bg-primary rounded-full flex items-center justify-center shadow-lg"
                     >
-                      <span className="text-[10px] font-bold text-black">{inCart.quantity}</span>
+                      <span className="text-[10px] font-bold text-primary-foreground">{inCart.quantity}</span>
                     </div>
                   )}
 
@@ -551,8 +548,8 @@ export default function KasirPage() {
                     </div>
                     {/* Add icon */}
                     <div className="absolute top-2.5 right-2.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="h-7 w-7 bg-white rounded-xl flex items-center justify-center shadow-lg">
-                        <Plus className="h-3.5 w-3.5 text-black" />
+                      <div className="h-7 w-7 bg-primary rounded-xl flex items-center justify-center shadow-lg">
+                        <Plus className="h-3.5 w-3.5 text-primary-foreground" />
                       </div>
                     </div>
                   </div>
@@ -560,7 +557,7 @@ export default function KasirPage() {
                   {/* Name */}
                   <div className="px-3 py-2.5">
                     <p className={`text-xs font-semibold line-clamp-1 transition-colors ${
-                      inCart ? "text-foreground/90" : "text-white/45 group-hover:text-foreground/80"
+                      inCart ? "text-foreground" : "text-foreground/45 group-hover:text-foreground/80"
                     }`}>
                       {product.name}
                     </p>
@@ -582,18 +579,18 @@ export default function KasirPage() {
               : "opacity-0 translate-y-4 pointer-events-none"
           }`}
           style={{
-            background: "rgba(255,255,255,0.97)",
-            boxShadow: "0 8px 40px rgba(255,255,255,0.15), 0 2px 8px rgba(0,0,0,0.4)",
+            background: "var(--primary)",
+            boxShadow: "0 8px 40px var(--foreground), 0 2px 8px rgba(0,0,0,0.4)",
             padding: "12px 20px 12px 14px",
           }}
         >
           {/* Left: cart icon + badge */}
           <div className="relative">
-            <div className="h-10 w-10 rounded-xl bg-black/[0.08] flex items-center justify-center">
-              <ShoppingCart className="h-5 w-5 text-black" />
+            <div className="h-10 w-10 rounded-xl bg-primary-foreground/10 flex items-center justify-center">
+              <ShoppingCart className="h-5 w-5 text-primary-foreground" />
             </div>
             <span
-              className="absolute -top-1.5 -right-1.5 h-5 min-w-5 px-1 bg-black text-white text-[9px] font-bold rounded-full flex items-center justify-center tabular-nums"
+              className="absolute -top-1.5 -right-1.5 h-5 min-w-5 px-1 bg-primary-foreground text-primary text-[9px] font-bold rounded-full flex items-center justify-center tabular-nums shadow-sm"
             >
               {totalItems}
             </span>
@@ -601,15 +598,15 @@ export default function KasirPage() {
 
           {/* Center: label */}
           <div className="flex flex-col items-start">
-            <span className="text-[9px] text-black/40 font-medium leading-none">{cart.length} produk</span>
-            <span className="text-base font-bold text-black leading-snug tabular-nums">
+            <span className="text-[9px] text-primary-foreground/50 font-medium leading-none">{cart.length} produk</span>
+            <span className="text-base font-bold text-primary-foreground leading-snug tabular-nums">
               Rp {fmt(totalAmount)}
             </span>
           </div>
 
           {/* Right: chevron */}
-          <div className="h-7 w-7 bg-black rounded-xl flex items-center justify-center ml-1">
-            <ChevronRight className="h-4 w-4 text-white" />
+          <div className="h-7 w-7 bg-primary-foreground/10 rounded-xl flex items-center justify-center ml-1">
+            <ChevronRight className="h-4 w-4 text-primary-foreground" />
           </div>
         </button>
       </div>

@@ -89,7 +89,7 @@ export function AppSidebar() {
                       }`}
                       render={
                         <a href={item.url} className="flex items-center gap-3 px-3 w-full">
-                          <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? "text-black" : "text-muted-foreground/50"}`} />
+                          <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? "text-primary-foreground" : "text-muted-foreground/50"}`} />
                           <span className="text-[13px]">{item.title}</span>
                         </a>
                       }
@@ -118,7 +118,7 @@ export function AppSidebar() {
           </div>
           <button
             onClick={handleLogout}
-            className="text-muted-foreground/40 hover:text-white/70 p-1.5 rounded-lg transition-colors hover:bg-white/[0.06] shrink-0"
+            className="text-muted-foreground/40 hover:text-foreground/70 p-1.5 rounded-lg transition-colors hover:bg-foreground/[0.06] shrink-0"
             title="Keluar"
           >
             <LogOut className="h-4 w-4" />

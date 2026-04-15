@@ -7,6 +7,7 @@ import {
   User, Lock, Eye, EyeOff, ShoppingBag, Coins,
   CreditCard, Banknote, CheckCircle2, XCircle, AlertCircle,
   KeyRound, Receipt, ArrowLeft, IceCream, CalendarDays,
+  Trophy, Star, Medal, Crown, Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -114,10 +115,9 @@ function getPeriodStart(period: Period): Date {
 function ChartTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="p-3 rounded-xl shadow-2xl min-w-[140px]"
-      style={{ background: "rgba(12,12,12,0.97)", border: "1px solid rgba(255,255,255,0.10)", backdropFilter: "blur(20px)" }}>
-      <p className="text-[9px] text-white/30 uppercase tracking-wider mb-1">{payload[0]?.payload?.label}</p>
-      <p className="text-sm font-bold text-white">Rp {fmt(Number(payload[0]?.value || 0))}</p>
+    <div className="p-3 rounded-xl shadow-2xl min-w-[140px] bg-popover/95 border border-border backdrop-blur-md">
+      <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">{payload[0]?.payload?.label}</p>
+      <p className="text-sm font-bold text-foreground">Rp {fmt(Number(payload[0]?.value || 0))}</p>
     </div>
   );
 }
@@ -130,11 +130,11 @@ function PeriodTabs({ value, onChange }: { value: Period; onChange: (p: Period) 
     { key: "monthly", label: "Bulanan" },
   ];
   return (
-    <div className="flex items-center border border-white/[0.07] rounded-2xl overflow-hidden bg-white/[0.02] p-1 gap-1">
+    <div className="flex items-center border border-border/50 rounded-2xl overflow-hidden bg-foreground/[0.02] p-1 gap-1">
       {tabs.map(t => (
         <button key={t.key} onClick={() => onChange(t.key)}
           className={`h-8 px-4 rounded-xl text-[11px] font-semibold transition-all ${
-            value === t.key ? "bg-white text-black" : "text-white/35 hover:text-white/70"
+            value === t.key ? "bg-primary text-primary-foreground" : "text-foreground/35 hover:text-foreground/70"
           }`}>
           {t.label}
         </button>
@@ -147,17 +147,15 @@ function PeriodTabs({ value, onChange }: { value: Period; onChange: (p: Period) 
 function ToastBanner({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
   if (!toast) return null;
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl"
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl bg-popover/95 backdrop-blur-md"
       style={{
-        background: "rgba(12,12,12,0.97)",
-        border: toast.type === "success" ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,80,80,0.30)",
-        backdropFilter: "blur(20px)",
+        border: toast.type === "success" ? "1px solid var(--border)" : "1px solid var(--destructive)",
       }}>
       {toast.type === "success"
-        ? <CheckCircle2 className="h-4 w-4 text-white/70 shrink-0" />
-        : <XCircle className="h-4 w-4 text-red-400 shrink-0" />}
-      <span className="text-xs font-semibold text-white/75">{toast.msg}</span>
-      <button onClick={onDismiss} className="ml-2 text-white/25 hover:text-white/60 text-xs">✕</button>
+        ? <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+        : <XCircle className="h-4 w-4 text-destructive shrink-0" />}
+      <span className="text-xs font-semibold text-foreground/75">{toast.msg}</span>
+      <button onClick={onDismiss} className="ml-2 text-muted-foreground hover:text-foreground text-xs">✕</button>
     </div>
   );
 }
@@ -175,6 +173,8 @@ export default function ProfilePage() {
   const [allTrx, setAllTrx]     = useState<Transaction[]>([]);
   const [trxLoading, setTrxLoading] = useState(true);
   const [period, setPeriod]     = useState<Period>("daily");
+  const [rank, setRank]         = useState<number | null>(null);
+  const [totalStaffCount, setTotalStaffCount] = useState(0);
 
   /* password form */
   const [currentPwd, setCurrentPwd]   = useState("");
@@ -219,6 +219,22 @@ export default function ProfilePage() {
         .order("created_at", { ascending: false });
       if (trxRaw) setAllTrx(trxRaw as Transaction[]);
       setTrxLoading(false);
+
+      /* Leaderboard rank calculation */
+      const { data: allTotals } = await supabase.from("transactions").select("staff_id, total_amount");
+      if (allTotals) {
+        const staffRevenue = new Map<string, number>();
+        allTotals.forEach((t: any) => {
+          if (!t.staff_id) return;
+          staffRevenue.set(t.staff_id, (staffRevenue.get(t.staff_id) || 0) + t.total_amount);
+        });
+        const sortedLeaderboard = Array.from(staffRevenue.entries())
+          .sort((a, b) => b[1] - a[1]);
+        
+        const myRank = sortedLeaderboard.findIndex(([sid]) => sid === uid);
+        if (myRank !== -1) setRank(myRank + 1);
+        setTotalStaffCount(staffRevenue.size);
+      }
     })();
   }, [router]);
 
@@ -264,10 +280,10 @@ export default function ProfilePage() {
   /* password strength */
   const pwdStrength = (() => {
     if (!newPwd) return null;
-    if (newPwd.length < 6) return { label: "Terlalu pendek", color: "rgba(255,80,80,0.8)", pct: 20 };
-    if (newPwd.length < 8) return { label: "Lemah", color: "rgba(255,160,40,0.8)", pct: 45 };
-    if (/[A-Z]/.test(newPwd) && /[0-9]/.test(newPwd)) return { label: "Kuat", color: "rgba(120,255,120,0.7)", pct: 100 };
-    return { label: "Cukup", color: "rgba(200,200,255,0.7)", pct: 70 };
+    if (newPwd.length < 6) return { label: "Terlalu pendek", color: "var(--destructive)", pct: 20 };
+    if (newPwd.length < 8) return { label: "Lemah", color: "orange", pct: 45 };
+    if (/[A-Z]/.test(newPwd) && /[0-9]/.test(newPwd)) return { label: "Kuat", color: "var(--primary)", pct: 100 };
+    return { label: "Cukup", color: "var(--muted-foreground)", pct: 70 };
   })();
 
   /* ── Loading screen ── */
@@ -282,13 +298,12 @@ export default function ProfilePage() {
 
       {/* ── Navbar ── */}
       <header
-        className="sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-border/50"
-        style={{ background: "var(--background)", backdropFilter: "blur(20px)" }}
+        className="sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-border/50 bg-background/80 backdrop-blur-md"
       >
         {/* Back button */}
         <Link href={profile?.role === "admin" ? "/dashboard" : "/kasir"}
-          className="flex items-center gap-2 text-white/40 hover:text-white/80 transition-colors group">
-          <div className="h-8 w-8 rounded-xl border border-white/[0.08] flex items-center justify-center group-hover:bg-white/[0.05] transition-all">
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
+          <div className="h-8 w-8 rounded-xl border border-border/40 flex items-center justify-center group-hover:bg-foreground/[0.05] transition-all">
             <ArrowLeft className="h-3.5 w-3.5" />
           </div>
           <span className="text-xs font-semibold hidden sm:block">
@@ -298,12 +313,12 @@ export default function ProfilePage() {
 
         {/* Brand */}
         <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 rounded-xl overflow-hidden border border-white/[0.10] shrink-0">
+          <div className="h-7 w-7 rounded-xl overflow-hidden border border-border/40 shrink-0">
             <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <div className="hidden sm:block">
-            <p className="text-xs font-bold text-white/80 leading-tight">ICE HMJ Tekinfo</p>
-            <p className="text-[9px] text-white/25 leading-tight uppercase tracking-widest">Profil Akun</p>
+            <p className="text-xs font-bold text-foreground leading-tight">ICE HMJ Tekinfo</p>
+            <p className="text-[9px] text-muted-foreground leading-tight uppercase tracking-widest">Profil Akun</p>
           </div>
         </div>
 
@@ -312,12 +327,11 @@ export default function ProfilePage() {
           <ThemeToggle />
           <div className="flex items-center gap-2">
           <span
-            className="h-7 px-3 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center border"
-            style={{
-              background: profile?.role === "admin" ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
-              border: profile?.role === "admin" ? "1px solid rgba(255,255,255,0.20)" : "1px solid rgba(255,255,255,0.08)",
-              color: profile?.role === "admin" ? "rgba(255,255,255,0.80)" : "rgba(255,255,255,0.35)",
-            }}
+            className={`h-7 px-3 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center border ${
+              profile?.role === "admin"
+                ? "bg-primary/10 border-primary/20 text-primary"
+                : "bg-foreground/[0.04] border-border/40 text-muted-foreground"
+            }`}
           >
             {profile?.role || "user"}
           </span>
@@ -336,18 +350,39 @@ export default function ProfilePage() {
             opacity: 0.2
           }} />
           <div className="px-6 pb-6">
+            {/* Achievement Badge */}
+            {rank !== null && rank <= 3 && (
+              <div className="pt-6 animate-in fade-in slide-in-from-top-4 duration-1000">
+                <div className={`inline-flex items-center gap-2.5 px-3 py-1.5 rounded-xl border backdrop-blur-md shadow-xl ${
+                  rank === 1 ? "bg-amber-400/10 border-amber-400/20 text-amber-400" :
+                  rank === 2 ? "bg-slate-400/10 border-slate-400/20 text-slate-300" :
+                  "bg-orange-400/10 border-orange-400/20 text-orange-400"
+                }`}>
+                  <div className="relative">
+                    {rank === 1 ? <Crown className="h-4 w-4 animate-bounce" /> :
+                     rank === 2 ? <Medal className="h-4 w-4" /> :
+                     <Star className="h-4 w-4" />}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] leading-none mb-0.5">Achievement</span>
+                    <span className="text-xs font-bold tracking-tight">Bintang Danus {rank}</span>
+                  </div>
+                  <Sparkles className="h-3 w-3 ml-1 opacity-50" />
+                </div>
+              </div>
+            )}
+
             {/* Avatar sits on the border */}
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-8 mb-5">
-              <div className="h-20 w-20 rounded-2xl border-2 border-[oklch(0.06_0_0)] shrink-0"
-                style={{ background: "rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.5)" }}>
+            <div className={`flex flex-col sm:flex-row sm:items-end gap-4 ${rank && rank <= 3 ? "mt-4" : "-mt-8"} mb-5`}>
+              <div className="h-20 w-20 rounded-2xl border-2 border-border shrink-0 bg-primary/10 shadow-xl">
                 <div className="h-full w-full rounded-2xl flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white/70">{initials}</span>
+                  <span className="text-2xl font-bold text-primary">{initials}</span>
                 </div>
               </div>
               <div className="pb-1">
-                <h1 className="text-xl font-bold text-white/90 tracking-tight">{displayName}</h1>
-                <p className="text-xs text-white/35 mt-0.5">{email}</p>
-                <p className="text-[10px] text-white/20 mt-1 flex items-center gap-1">
+                <h1 className="text-xl font-bold text-foreground tracking-tight">{displayName}</h1>
+                <p className="text-xs text-muted-foreground mt-0.5">{email}</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
                   <User className="h-3 w-3" /> Bergabung {joinedDate}
                 </p>
               </div>
@@ -361,10 +396,10 @@ export default function ProfilePage() {
                 { label: "Transaksi QRIS", value: `${totalQris}×`, sub: "semua waktu" },
                 { label: "Transaksi Tunai", value: `${totalCash}×`, sub: "semua waktu" },
               ].map(s => (
-                <div key={s.label} className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3">
-                  <p className="text-[9px] font-semibold text-white/25 uppercase tracking-widest">{s.label}</p>
-                  <p className="text-lg font-bold text-white/85 tabular-nums mt-0.5">{s.value}</p>
-                  <p className="text-[9px] text-white/20 mt-0.5">{s.sub}</p>
+                <div key={s.label} className="rounded-xl border border-border/40 bg-foreground/[0.03] px-4 py-3">
+                  <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">{s.label}</p>
+                  <p className="text-lg font-bold text-foreground tabular-nums mt-0.5">{s.value}</p>
+                  <p className="text-[9px] text-muted-foreground/40 mt-0.5">{s.sub}</p>
                 </div>
               ))}
             </div>
@@ -372,23 +407,22 @@ export default function ProfilePage() {
         </div>
 
         {/* ── Period Summary Banner + Tabs ── */}
-        <div className="rounded-2xl border border-white/[0.07] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5"
-          style={{ background: "rgba(255,255,255,0.025)" }}>
+        <div className="rounded-2xl border border-border/50 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5 bg-card/20">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <CalendarDays className="h-3.5 w-3.5 text-white/30" />
-              <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Laporan Transaksi</span>
+              <CalendarDays className="h-3.5 w-3.5 text-muted-foreground/40" />
+              <span className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-widest">Laporan Transaksi</span>
             </div>
-            <p className="text-sm font-bold text-white/80">{periodLabel}</p>
-            <p className="text-[10px] text-white/25 mt-0.5">
+            <p className="text-sm font-bold text-foreground/80">{periodLabel}</p>
+            <p className="text-[10px] text-muted-foreground/40 mt-0.5">
               {periodCount} transaksi ·{" "}
               {periodQris}× QRIS · {periodCash}× Tunai
             </p>
           </div>
           <div className="flex items-center gap-6 flex-wrap">
             <div className="text-right">
-              <p className="text-[9px] text-white/25 uppercase tracking-widest">Pendapatan</p>
-              <p className="text-2xl font-bold text-white tabular-nums tracking-tight">Rp {fmt(periodRevenue)}</p>
+              <p className="text-[9px] text-muted-foreground/40 uppercase tracking-widest">Pendapatan</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight">Rp {fmt(periodRevenue)}</p>
             </div>
             <PeriodTabs value={period} onChange={setPeriod} />
           </div>
@@ -398,15 +432,15 @@ export default function ProfilePage() {
         <div className="grid gap-5 lg:grid-cols-5">
 
           {/* Chart */}
-          <div className="lg:col-span-3 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
+          <div className="lg:col-span-3 rounded-2xl border border-border/50 bg-card/30 p-5">
             <div className="flex items-start justify-between mb-5">
               <div>
-                <h3 className="text-sm font-semibold text-white/80">
+                <h3 className="text-sm font-semibold text-foreground/80">
                   Grafik Penjualan · {period === "daily" ? "7 Hari" : period === "weekly" ? "4 Minggu" : "6 Bulan"} Terakhir
                 </h3>
-                <p className="text-[10px] text-white/25 mt-0.5">Pendapatan Anda dalam Rupiah</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Pendapatan Anda dalam Rupiah</p>
               </div>
-              <span className="text-xs font-bold text-white/70 bg-white/[0.06] border border-white/[0.08] rounded-lg px-2.5 py-1 tabular-nums">
+              <span className="text-xs font-bold text-foreground/70 bg-foreground/[0.06] border border-border/40 rounded-lg px-2.5 py-1 tabular-nums">
                 Rp {fmt(chartTotal)}
               </span>
             </div>
@@ -420,24 +454,24 @@ export default function ProfilePage() {
                   <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="areaGradP" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%"   stopColor="rgba(255,255,255,0.15)" />
-                        <stop offset="100%" stopColor="rgba(255,255,255,0.00)" />
+                        <stop offset="0%"   stopColor="var(--foreground)" stopOpacity={0.15} />
+                        <stop offset="100%" stopColor="var(--foreground)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(255,255,255,0.04)" />
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border)" strokeOpacity={0.2} />
                     <XAxis dataKey="name" axisLine={false} tickLine={false}
-                      tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10, fontFamily: "inherit" }} dy={8} />
+                      tick={{ fill: "var(--muted-foreground)", fontSize: 10, fontFamily: "inherit" }} dy={8} />
                     <YAxis axisLine={false} tickLine={false} width={50}
                       tickFormatter={v => v === 0 ? "0" : fmtShort(v)}
-                      tick={{ fill: "rgba(255,255,255,0.20)", fontSize: 10, fontFamily: "inherit" }} />
+                      tick={{ fill: "var(--muted-foreground)", fontSize: 10, fontFamily: "inherit" }} />
                     <RechartsTooltip
-                      cursor={{ stroke: "rgba(255,255,255,0.07)", strokeWidth: 1, strokeDasharray: "4 4" }}
+                      cursor={{ stroke: "var(--border)", strokeWidth: 1, strokeDasharray: "4 4" }}
                       content={<ChartTooltip />}
                     />
                     <Area type="monotone" dataKey="sales"
-                      stroke="rgba(255,255,255,0.55)" strokeWidth={1.5}
+                      stroke="var(--foreground)" strokeOpacity={0.55} strokeWidth={1.5}
                       fill="url(#areaGradP)" dot={false}
-                      activeDot={{ r: 4, fill: "#fff", stroke: "rgba(255,255,255,0.2)", strokeWidth: 6 }}
+                      activeDot={{ r: 4, fill: "var(--foreground)", stroke: "var(--foreground)", strokeOpacity: 0.2, strokeWidth: 6 }}
                       animationDuration={800} animationEasing="ease-out"
                     />
                   </AreaChart>
@@ -449,8 +483,8 @@ export default function ProfilePage() {
               {chartData.map(d => (
                 <div key={d.label} className="flex flex-col items-center gap-1 flex-1">
                   <div className="h-0.5 w-6 rounded-full mx-auto"
-                    style={{ background: d.sales > 0 ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.05)" }} />
-                  <span className="text-[8px] text-white/20 tabular-nums text-center">
+                    style={{ background: d.sales > 0 ? "var(--foreground)" : "var(--muted-foreground)", opacity: d.sales > 0 ? 0.35 : 0.05 }} />
+                  <span className="text-[8px] text-muted-foreground/40 tabular-nums text-center">
                     {d.sales > 0 ? fmtShort(d.sales) : "—"}
                   </span>
                 </div>
@@ -459,13 +493,13 @@ export default function ProfilePage() {
           </div>
 
           {/* Recent transactions in period */}
-          <div className="lg:col-span-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] overflow-hidden flex flex-col">
-            <div className="px-5 pt-5 pb-4 border-b border-white/[0.06] flex items-center justify-between">
+          <div className="lg:col-span-2 rounded-2xl border border-border/50 bg-card/30 overflow-hidden flex flex-col">
+            <div className="px-5 pt-5 pb-4 border-b border-border/40 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Receipt className="h-3.5 w-3.5 text-white/30" />
+                <Receipt className="h-3.5 w-3.5 text-muted-foreground/40" />
                 <div>
-                  <h3 className="text-sm font-semibold text-white/80">Transaksi {periodLabel}</h3>
-                  <p className="text-[10px] text-white/25 mt-0.5">{periodCount} pesanan</p>
+                  <h3 className="text-sm font-semibold text-foreground/80">Transaksi {periodLabel}</h3>
+                  <p className="text-[10px] text-muted-foreground/40 mt-0.5">{periodCount} pesanan</p>
                 </div>
               </div>
             </div>
@@ -476,27 +510,27 @@ export default function ProfilePage() {
                 </div>
               ) : periodTrx.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-32 gap-2">
-                  <ShoppingBag className="h-6 w-6 text-white/10" />
-                  <p className="text-xs text-white/20">Belum ada transaksi {periodLabel.toLowerCase()}</p>
+                  <ShoppingBag className="h-6 w-6 text-foreground/5" />
+                  <p className="text-xs text-muted-foreground/40">Belum ada transaksi {periodLabel.toLowerCase()}</p>
                 </div>
               ) : (
                 <div className="p-3 space-y-0.5">
                   {periodTrx.map(trx => (
-                    <div key={trx.id} className="flex items-start gap-3 px-2.5 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors group cursor-default">
+                    <div key={trx.id} className="flex items-start gap-3 px-2.5 py-2.5 rounded-xl hover:bg-foreground/[0.03] transition-colors group cursor-default">
                       <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 border text-[9px] font-bold mt-0.5 ${
                         trx.payment_method === "qris"
-                          ? "border-white/15 bg-white/[0.06] text-white/60"
-                          : "border-white/[0.06] bg-white/[0.02] text-white/30"
+                          ? "border-primary/20 bg-primary/10 text-primary"
+                          : "border-border/40 bg-foreground/[0.02] text-muted-foreground"
                       }`}>
                         {trx.payment_method === "qris" ? "QR" : "Rp"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] text-white/50 truncate group-hover:text-white/75 transition-colors">
+                        <p className="text-[10px] text-foreground/50 truncate group-hover:text-foreground transition-colors">
                           {trx.transaction_items.map(ti => `${ti.quantity}× ${ti.products?.name}`).join(", ")}
                         </p>
-                        <p className="text-[9px] text-white/20 mt-0.5">{timeAgo(trx.created_at)}</p>
+                        <p className="text-[9px] text-muted-foreground/40 mt-0.5">{timeAgo(trx.created_at)}</p>
                       </div>
-                      <span className="text-xs font-bold text-white/65 shrink-0 tabular-nums">
+                      <span className="text-xs font-bold text-foreground/70 shrink-0 tabular-nums">
                         +{fmtShort(trx.total_amount)}
                       </span>
                     </div>
@@ -505,9 +539,9 @@ export default function ProfilePage() {
               )}
             </div>
             {periodTrx.length > 0 && (
-              <div className="px-5 py-3 border-t border-white/[0.06] flex justify-between items-center">
-                <span className="text-[10px] text-white/20">{periodCount} transaksi</span>
-                <span className="text-[11px] font-bold text-white/55 tabular-nums">
+              <div className="px-5 py-3 border-t border-border/40 flex justify-between items-center bg-foreground/[0.01]">
+                <span className="text-[10px] text-muted-foreground/40">{periodCount} transaksi</span>
+                <span className="text-[11px] font-bold text-foreground/60 tabular-nums">
                   Rp {fmt(periodRevenue)}
                 </span>
               </div>
@@ -516,45 +550,45 @@ export default function ProfilePage() {
         </div>
 
         {/* ── All period transactions table ── */}
-        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] overflow-hidden">
-          <div className="px-5 pt-5 pb-4 border-b border-white/[0.06] flex items-center justify-between">
+        <div className="rounded-2xl border border-border/50 bg-card/30 overflow-hidden">
+          <div className="px-5 pt-5 pb-4 border-b border-border/40 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-white/80">Semua Transaksi Saya</h3>
-              <p className="text-[10px] text-white/25 mt-0.5">Riwayat lengkap 6 bulan terakhir</p>
+              <h3 className="text-sm font-semibold text-foreground/80">Semua Transaksi Saya</h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Riwayat lengkap 6 bulan terakhir</p>
             </div>
-            <span className="text-[10px] font-mono text-white/20 bg-white/[0.03] border border-white/[0.06] rounded-lg px-2.5 py-1">
+            <span className="text-[10px] font-mono text-muted-foreground bg-foreground/[0.03] border border-border/40 rounded-lg px-2.5 py-1">
               {allTrx.length} total
             </span>
           </div>
           <div className="max-h-[400px] overflow-y-auto">
             {trxLoading ? (
               <div className="flex items-center justify-center h-32 gap-2">
-                <div className="h-4 w-4 border border-white/20 border-t-white/70 rounded-full animate-spin" />
-                <span className="text-xs text-white/30">Memuat...</span>
+                <div className="h-4 w-4 border border-primary/20 border-t-primary rounded-full animate-spin" />
+                <span className="text-xs text-muted-foreground">Memuat...</span>
               </div>
             ) : allTrx.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 gap-2">
-                <ShoppingBag className="h-6 w-6 text-white/10" />
-                <p className="text-xs text-white/20">Belum ada transaksi</p>
+                <ShoppingBag className="h-6 w-6 text-foreground/5" />
+                <p className="text-xs text-muted-foreground/40">Belum ada transaksi</p>
               </div>
             ) : (
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/[0.05]">
-                    <th className="h-9 px-5 text-left text-[9px] font-semibold text-white/20 uppercase tracking-widest bg-white/[0.02]">Waktu</th>
-                    <th className="h-9 text-left text-[9px] font-semibold text-white/20 uppercase tracking-widest bg-white/[0.02]">Pesanan</th>
-                    <th className="h-9 text-left text-[9px] font-semibold text-white/20 uppercase tracking-widest bg-white/[0.02]">Bayar</th>
-                    <th className="h-9 px-5 text-right text-[9px] font-semibold text-white/20 uppercase tracking-widest bg-white/[0.02]">Total</th>
+                  <tr className="border-b border-border/30">
+                    <th className="h-9 px-5 text-left text-[9px] font-semibold text-muted-foreground uppercase tracking-widest bg-foreground/[0.02]">Waktu</th>
+                    <th className="h-9 text-left text-[9px] font-semibold text-muted-foreground uppercase tracking-widest bg-foreground/[0.02]">Pesanan</th>
+                    <th className="h-9 text-left text-[9px] font-semibold text-muted-foreground uppercase tracking-widest bg-foreground/[0.02]">Bayar</th>
+                    <th className="h-9 px-5 text-right text-[9px] font-semibold text-muted-foreground uppercase tracking-widest bg-foreground/[0.02]">Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {allTrx.map(trx => (
-                    <tr key={trx.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
-                      <td className="px-5 py-3 text-[10px] text-white/35 whitespace-nowrap align-top">{formatDate(trx.created_at)}</td>
+                    <tr key={trx.id} className="border-b border-border/20 hover:bg-foreground/[0.01] transition-colors group">
+                      <td className="px-5 py-3 text-[10px] text-muted-foreground whitespace-nowrap align-top">{formatDate(trx.created_at)}</td>
                       <td className="py-3 max-w-[200px] align-top">
                         <div className="space-y-0.5">
                           {trx.transaction_items.map((ti, i) => (
-                            <p key={i} className="text-[10px] text-white/45 truncate group-hover:text-white/65 transition-colors">
+                            <p key={i} className="text-[10px] text-foreground/50 truncate group-hover:text-foreground transition-colors">
                               {ti.quantity}× {ti.products?.name || "—"}
                             </p>
                           ))}
@@ -563,8 +597,8 @@ export default function ProfilePage() {
                       <td className="py-3 align-top">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold border uppercase tracking-wide ${
                           trx.payment_method === "qris"
-                            ? "border-white/15 text-white/60 bg-white/[0.05]"
-                            : "border-white/[0.05] text-white/25 bg-transparent"
+                            ? "border-primary/20 text-primary bg-primary/10"
+                            : "border-border/40 text-muted-foreground/40 bg-transparent"
                         }`}>
                           {trx.payment_method === "qris"
                             ? <><CreditCard className="h-2.5 w-2.5" /> QRIS</>
@@ -572,7 +606,7 @@ export default function ProfilePage() {
                         </span>
                       </td>
                       <td className="px-5 py-3 text-right align-top">
-                        <span className="text-xs font-bold text-white/75 tabular-nums">Rp {fmt(trx.total_amount)}</span>
+                        <span className="text-xs font-bold text-foreground/75 tabular-nums">Rp {fmt(trx.total_amount)}</span>
                       </td>
                     </tr>
                   ))}
@@ -581,34 +615,34 @@ export default function ProfilePage() {
             )}
           </div>
           {allTrx.length > 0 && !trxLoading && (
-            <div className="px-5 py-3 border-t border-white/[0.06] flex justify-between items-center">
-              <span className="text-[10px] text-white/20">{allTrx.length} transaksi (6 bulan terakhir)</span>
-              <span className="text-[11px] font-bold text-white/55 tabular-nums">Total: Rp {fmt(totalRevenue)}</span>
+            <div className="px-5 py-3 border-t border-border/40 flex justify-between items-center bg-foreground/[0.01]">
+              <span className="text-[10px] text-muted-foreground/30">{allTrx.length} transaksi (6 bulan terakhir)</span>
+              <span className="text-[11px] font-bold text-foreground/60 tabular-nums">Total: Rp {fmt(totalRevenue)}</span>
             </div>
           )}
         </div>
 
         {/* ── Change Password ── */}
-        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] overflow-hidden max-w-lg">
-          <div className="px-5 pt-5 pb-4 border-b border-white/[0.06] flex items-center gap-2">
-            <KeyRound className="h-3.5 w-3.5 text-white/30" />
+        <div className="rounded-2xl border border-border/50 bg-card/30 overflow-hidden max-w-lg">
+          <div className="px-5 pt-5 pb-4 border-b border-border/40 flex items-center gap-2">
+            <KeyRound className="h-3.5 w-3.5 text-muted-foreground/40" />
             <div>
-              <h3 className="text-sm font-semibold text-white/80">Ganti Password</h3>
-              <p className="text-[10px] text-white/25 mt-0.5">Perbarui kata sandi akun Anda</p>
+              <h3 className="text-sm font-semibold text-foreground/80">Ganti Password</h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Perbarui kata sandi akun Anda</p>
             </div>
           </div>
 
           <form onSubmit={handleChangePassword} className="p-5 space-y-4">
             {/* Current */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold text-white/35 uppercase tracking-widest">Password Saat Ini</label>
+              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Password Saat Ini</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20 pointer-events-none" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/30 pointer-events-none" />
                 <input type={showCurrent ? "text" : "password"} value={currentPwd} onChange={e => setCurrentPwd(e.target.value)}
                   placeholder="••••••••" required
-                  className="w-full h-10 pl-9 pr-10 bg-white/[0.03] border border-white/[0.07] rounded-xl text-xs text-white/70 placeholder:text-white/20 outline-none focus:border-white/20 transition-all" />
+                  className="w-full h-10 pl-9 pr-10 bg-foreground/[0.03] border border-border/40 rounded-xl text-xs text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-foreground/20 transition-all" />
                 <button type="button" onClick={() => setShowCurrent(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/55 transition-colors">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-foreground transition-colors">
                   {showCurrent ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
               </div>
@@ -616,20 +650,20 @@ export default function ProfilePage() {
 
             {/* New */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold text-white/35 uppercase tracking-widest">Password Baru</label>
+              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Password Baru</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20 pointer-events-none" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/30 pointer-events-none" />
                 <input type={showNew ? "text" : "password"} value={newPwd} onChange={e => setNewPwd(e.target.value)}
                   placeholder="••••••••" required
-                  className="w-full h-10 pl-9 pr-10 bg-white/[0.03] border border-white/[0.07] rounded-xl text-xs text-white/70 placeholder:text-white/20 outline-none focus:border-white/20 transition-all" />
+                  className="w-full h-10 pl-9 pr-10 bg-foreground/[0.03] border border-border/40 rounded-xl text-xs text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-foreground/20 transition-all" />
                 <button type="button" onClick={() => setShowNew(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/55 transition-colors">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-foreground transition-colors">
                   {showNew ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
               </div>
               {pwdStrength && (
                 <div className="space-y-1 pt-0.5">
-                  <div className="h-0.5 w-full rounded-full bg-white/[0.05] overflow-hidden">
+                  <div className="h-0.5 w-full rounded-full bg-foreground/[0.05] overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pwdStrength.pct}%`, background: pwdStrength.color }} />
                   </div>
                   <p className="text-[9px]" style={{ color: pwdStrength.color }}>{pwdStrength.label}</p>
@@ -639,31 +673,31 @@ export default function ProfilePage() {
 
             {/* Confirm */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold text-white/35 uppercase tracking-widest">Konfirmasi Password Baru</label>
+              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Konfirmasi Password Baru</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20 pointer-events-none" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/30 pointer-events-none" />
                 <input type={showConfirm ? "text" : "password"} value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)}
                   placeholder="••••••••" required
-                  className="w-full h-10 pl-9 pr-10 bg-white/[0.03] border border-white/[0.07] rounded-xl text-xs text-white/70 placeholder:text-white/20 outline-none focus:border-white/20 transition-all" />
+                  className="w-full h-10 pl-9 pr-10 bg-foreground/[0.03] border border-border/40 rounded-xl text-xs text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-foreground/20 transition-all" />
                 <button type="button" onClick={() => setShowConfirm(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/55 transition-colors">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-foreground transition-colors">
                   {showConfirm ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
               </div>
               {confirmPwd && newPwd && (
                 <div className="flex items-center gap-1.5 pt-0.5">
                   {confirmPwd === newPwd
-                    ? <><CheckCircle2 className="h-3 w-3 text-white/50" /><span className="text-[9px] text-white/40">Password cocok</span></>
-                    : <><AlertCircle className="h-3 w-3 text-red-400/70" /><span className="text-[9px] text-red-400/60">Password tidak cocok</span></>}
+                    ? <><CheckCircle2 className="h-3 w-3 text-primary/50" /><span className="text-[9px] text-muted-foreground/40">Password cocok</span></>
+                    : <><AlertCircle className="h-3 w-3 text-destructive/70" /><span className="text-[9px] text-destructive/60">Password tidak cocok</span></>}
                 </div>
               )}
             </div>
 
             {/* Submit */}
             <button type="submit" disabled={pwdLoading}
-              className="w-full h-10 rounded-xl bg-white text-black text-xs font-bold tracking-wide disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/90 active:bg-white/80 transition-all flex items-center justify-center gap-2">
+              className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-xs font-bold tracking-wide disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
               {pwdLoading
-                ? <><div className="h-3.5 w-3.5 border-2 border-black/20 border-t-black/70 rounded-full animate-spin" />Menyimpan...</>
+                ? <><div className="h-3.5 w-3.5 border-2 border-primary-foreground/20 border-t-primary-foreground rounded-full animate-spin" />Menyimpan...</>
                 : <><KeyRound className="h-3.5 w-3.5" />Simpan Password Baru</>}
             </button>
           </form>

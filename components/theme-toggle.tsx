@@ -21,10 +21,10 @@ export function ThemeToggle() {
           <Button 
             variant="outline" 
             size="icon" 
-            className="h-9 w-9 rounded-xl border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] transition-all"
+            className="h-9 w-9 rounded-xl border-border bg-foreground/[0.02] hover:bg-foreground/[0.06] transition-all"
           >
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-white/70" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-white/70" />
+            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-foreground/70" />
+            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-foreground/70" />
             <span className="sr-only">Ganti Tema</span>
           </Button>
         }

@@ -92,10 +92,10 @@ export default function LoginPage() {
             <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </button>
           <div className="text-center">
-            <h1 className="text-lg font-bold text-foreground/90 tracking-tight">
+            <h1 className="text-lg font-bold text-foreground tracking-tight">
               {showRegister ? "Buat Akun" : "ICE HMJ Tekinfo"}
             </h1>
-            <p className="text-xs text-muted-foreground/30 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {showRegister ? "Daftarkan akun kasir baru" : "Masuk ke sistem kasir"}
             </p>
           </div>
@@ -107,28 +107,28 @@ export default function LoginPage() {
           {showRegister ? (
             <form onSubmit={handleRegister} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Nama</label>
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Nama</label>
                 <input className={inputClass} type="text" placeholder="Nama lengkap" value={regName} onChange={e => setRegName(e.target.value)} required />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Email</label>
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Email</label>
                 <input className={inputClass} type="email" placeholder="nama@email.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} required />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Password</label>
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Password</label>
                 <input className={inputClass} type="password" placeholder="Min. 6 karakter" value={regPassword} onChange={e => setRegPassword(e.target.value)} required minLength={6} />
               </div>
 
-              {error && <p className="text-xs text-red-400/80 border border-red-400/10 bg-red-400/5 rounded-lg p-2.5">{error}</p>}
-              {success && <p className="text-xs text-muted-foreground/60 border border-white/10 bg-white/[0.04] rounded-lg p-2.5">{success}</p>}
+              {error && <p className="text-xs text-destructive border border-destructive/20 bg-destructive/5 rounded-lg p-2.5">{error}</p>}
+              {success && <p className="text-xs text-muted-foreground border border-border bg-accent/20 rounded-lg p-2.5">{success}</p>}
 
               <div className="pt-1 space-y-2">
                 <button type="submit" disabled={loading}
-                  className="w-full h-10 rounded-xl bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buat Akun"}
                 </button>
                 <button type="button" onClick={() => setShowRegister(false)}
-                  className="w-full text-xs text-muted-foreground/25 hover:text-muted-foreground/50 transition-colors py-1">
+                  className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1">
                   ← Kembali ke halaman masuk
                 </button>
               </div>
@@ -136,19 +136,19 @@ export default function LoginPage() {
           ) : (
             <form onSubmit={handleLogin} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Nama</label>
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Nama</label>
                 <input className={inputClass} type="text" placeholder="Nama lengkap Anda" value={name} onChange={e => setName(e.target.value)} required />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Password</label>
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Password</label>
                 <input className={inputClass} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
               </div>
 
-              {error && <p className="text-xs text-red-400/80 border border-red-400/10 bg-red-400/5 rounded-lg p-2.5">{error}</p>}
+              {error && <p className="text-xs text-destructive border border-destructive/20 bg-destructive/5 rounded-lg p-2.5">{error}</p>}
 
               <div className="pt-1">
                 <button type="submit" disabled={loading}
-                  className="w-full h-10 rounded-xl bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Masuk"}
                 </button>
               </div>
@@ -156,7 +156,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p className="text-center text-[10px] text-muted-foreground/15 mt-6">ICE HMJ Tekinfo © 2025</p>
+        <p className="text-center text-[10px] text-muted-foreground/40 mt-6">ICE HMJ Tekinfo © 2025</p>
       </div>
     </div>
   );

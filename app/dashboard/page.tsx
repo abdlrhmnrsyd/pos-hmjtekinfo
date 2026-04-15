@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Coins, ShoppingBag, IceCream, TrendingUp,
-  ArrowUpRight, CalendarDays, User,
+  ArrowUpRight, CalendarDays, User, Trophy, Star, Medal, Crown,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -31,14 +31,14 @@ function StatCard({ title, value, sub, icon: Icon }: {
   title: string; value: string; sub: string; icon: React.ElementType;
 }) {
   return (
-    <div className="group rounded-2xl border border-border/50 surface hover:bg-white/[0.04] hover:border-white/[0.12] transition-all duration-300 p-5">
+    <div className="group rounded-2xl border border-border/50 bg-card/50 hover:bg-accent/5 transition-all duration-300 p-5">
       <div className="flex items-start justify-between mb-4">
         <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-[0.15em]">{title}</span>
-        <div className="h-7 w-7 rounded-xl bg-white/[0.04] border border-border/40 flex items-center justify-center group-hover:bg-white/[0.08] transition-all">
-          <Icon className="h-3.5 w-3.5 text-white/35 group-hover:text-white/70 transition-colors" />
+        <div className="h-7 w-7 rounded-xl bg-foreground/[0.04] border border-border/40 flex items-center justify-center group-hover:bg-foreground/[0.08] transition-all">
+          <Icon className="h-3.5 w-3.5 text-foreground/35 group-hover:text-foreground/70 transition-colors" />
         </div>
       </div>
-      <p className="text-[1.6rem] font-bold text-white tracking-tight leading-none mb-2">{value}</p>
+      <p className="text-[1.6rem] font-bold text-foreground tracking-tight leading-none mb-2">{value}</p>
       <p className="text-[10px] text-muted-foreground/60">{sub}</p>
     </div>
   );
@@ -48,10 +48,9 @@ function StatCard({ title, value, sub, icon: Icon }: {
 function ChartTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="p-3 rounded-xl shadow-2xl min-w-[150px]"
-      style={{ background: "rgba(18,18,18,0.97)", border: "1px solid rgba(255,255,255,0.10)", backdropFilter: "blur(20px)" }}>
+    <div className="p-3 rounded-xl shadow-2xl min-w-[150px] bg-popover/95 border border-border backdrop-blur-md">
       <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">{payload[0]?.payload?.label}</p>
-      <p className="text-base font-bold text-white">Rp {fmt(Number(payload[0]?.value || 0))}</p>
+      <p className="text-sm font-bold text-foreground">Rp {fmt(Number(payload[0]?.value || 0))}</p>
     </div>
   );
 }
@@ -64,11 +63,11 @@ function PeriodTabs({ value, onChange }: { value: Period; onChange: (p: Period) 
     { key: "monthly", label: "Bulanan" },
   ];
   return (
-    <div className="flex items-center border border-border/50 rounded-2xl overflow-hidden bg-white/[0.02] p-1 gap-1">
+    <div className="flex items-center border border-border/50 rounded-2xl overflow-hidden bg-foreground/[0.02] p-1 gap-1">
       {tabs.map(t => (
         <button key={t.key} onClick={() => onChange(t.key)}
           className={`h-8 px-4 rounded-xl text-[11px] font-semibold transition-all ${
-            value === t.key ? "bg-white text-black" : "text-white/35 hover:text-white/70"
+            value === t.key ? "bg-primary text-primary-foreground" : "text-foreground/35 hover:text-foreground/70"
           }`}>
           {t.label}
         </button>
@@ -264,7 +263,7 @@ export default function Dashboard() {
       {/* ── Header ── */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-xl font-bold text-white/90 tracking-tight">Dashboard Admin</h2>
+          <h2 className="text-xl font-bold text-foreground tracking-tight">Dashboard Admin</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             {now.toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
           </p>
@@ -282,8 +281,7 @@ export default function Dashboard() {
 
       {/* ── Period selector + summary banner ── */}
       <div
-        className="rounded-2xl border border-border/50 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5"
-        style={{ background: "rgba(255,255,255,0.025)" }}
+        className="rounded-2xl border border-border/50 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5 bg-card/20"
       >
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -298,11 +296,11 @@ export default function Dashboard() {
         <div className="flex items-center gap-6 flex-wrap">
           <div className="text-right">
             <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">Total Pendapatan</p>
-            <p className="text-2xl font-bold text-white tabular-nums tracking-tight">Rp {fmt(periodRevenue)}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight">Rp {fmt(periodRevenue)}</p>
           </div>
           <div className="text-right">
             <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">Rata-rata/Trx</p>
-            <p className="text-lg font-bold text-white/70 tabular-nums">Rp {fmt(periodAvg)}</p>
+            <p className="text-lg font-bold text-foreground/70 tabular-nums">Rp {fmt(periodAvg)}</p>
           </div>
           <PeriodTabs value={period} onChange={setPeriod} />
         </div>
@@ -337,24 +335,24 @@ export default function Dashboard() {
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor="rgba(255,255,255,0.15)" />
-                    <stop offset="100%" stopColor="rgba(255,255,255,0.00)" />
+                    <stop offset="0%"   stopColor="var(--foreground)" stopOpacity={0.15} />
+                    <stop offset="100%" stopColor="var(--foreground)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(255,255,255,0.04)" />
+                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border)" strokeOpacity={0.2} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false}
-                  tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10, fontFamily: "inherit" }} dy={8} />
+                  tick={{ fill: "var(--muted-foreground)", fontSize: 10, fontFamily: "inherit" }} dy={8} />
                 <YAxis axisLine={false} tickLine={false} width={50}
                   tickFormatter={v => v === 0 ? "0" : fmtShort(v)}
-                  tick={{ fill: "rgba(255,255,255,0.20)", fontSize: 10, fontFamily: "inherit" }} />
+                  tick={{ fill: "var(--muted-foreground)", fontSize: 10, fontFamily: "inherit" }} />
                 <RechartsTooltip
-                  cursor={{ stroke: "rgba(255,255,255,0.07)", strokeWidth: 1, strokeDasharray: "4 4" }}
+                  cursor={{ stroke: "var(--border)", strokeWidth: 1, strokeDasharray: "4 4" }}
                   content={<ChartTooltip />}
                 />
                 <Area type="monotone" dataKey="sales"
-                  stroke="rgba(255,255,255,0.55)" strokeWidth={1.5}
+                  stroke="var(--foreground)" strokeOpacity={0.55} strokeWidth={1.5}
                   fill="url(#areaGrad)" dot={false}
-                  activeDot={{ r: 4, fill: "#fff", stroke: "rgba(255,255,255,0.2)", strokeWidth: 6 }}
+                  activeDot={{ r: 4, fill: "var(--foreground)", stroke: "var(--foreground)", strokeOpacity: 0.2, strokeWidth: 6 }}
                   animationDuration={800} animationEasing="ease-out"
                 />
               </AreaChart>
@@ -365,7 +363,7 @@ export default function Dashboard() {
             {chartData.map(d => (
               <div key={d.label} className="flex flex-col items-center gap-1 flex-1">
                 <div className="h-0.5 w-6 rounded-full mx-auto"
-                  style={{ background: d.sales > 0 ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.05)" }} />
+                  style={{ background: d.sales > 0 ? "var(--foreground)" : "var(--muted-foreground)", opacity: d.sales > 0 ? 0.35 : 0.1 }} />
                 <span className="text-[8px] text-muted-foreground/40 tabular-nums text-center">
                   {d.sales > 0 ? fmtShort(d.sales) : "—"}
                 </span>
@@ -374,39 +372,80 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Top Staff */}
+        {/* Top Staff by Revenue */}
         <div className="lg:col-span-2 rounded-2xl border border-border/50 surface p-5 flex flex-col">
-          <div className="flex items-center gap-2 mb-5">
-            <User className="h-3.5 w-3.5 text-muted-foreground" />
-            <h3 className="text-sm font-semibold text-foreground/80">Performa Kasir</h3>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground/80 flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-primary" /> Bintang Danus
+              </h3>
+              <p className="text-[10px] text-muted-foreground/60 mt-0.5">Penjualan Terbanyak (All Time)</p>
+            </div>
+            <span className="text-[9px] text-muted-foreground/40 border border-border/40 rounded-lg px-2 py-0.5 uppercase tracking-wider">
+              Hall of Fame
+            </span>
           </div>
           {topStaff.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-xs text-muted-foreground/40">Belum ada data</p>
+            <div className="flex-1 flex flex-col items-center justify-center py-10 gap-2">
+              <Star className="h-6 w-6 text-foreground/5 animate-pulse" />
+              <p className="text-xs text-muted-foreground/40 text-center">Belum ada pejuang danus terdeteksi</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {topStaff.map((s, i) => {
                 const maxTotal = topStaff[0].total;
                 const pct = Math.round((s.total / maxTotal) * 100);
+                
+                // Achievement Rank Styling
+                const isTop3 = i < 3;
+                const rankLabels = ["Bintang Danus 1", "Bintang Danus 2", "Bintang Danus 3"];
+                const rankColors = [
+                  "text-amber-400 bg-amber-400/10 border-amber-400/20", // Gold
+                  "text-slate-300 bg-slate-400/10 border-slate-400/20", // Silver
+                  "text-orange-400 bg-orange-400/10 border-orange-400/20" // Bronze
+                ];
+                const rankIcons = [
+                  <Crown key="cr" className="h-3 w-3" />,
+                  <Medal key="md" className="h-3 w-3" />,
+                  <Star key="st" className="h-3 w-3" />
+                ];
+
                 return (
-                  <div key={s.name} className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[9px] font-mono text-muted-foreground/40 shrink-0 w-3">{i + 1}</span>
-                        <div className="h-5 w-5 rounded-md bg-accent/30 border border-white/[0.08] flex items-center justify-center shrink-0">
-                          <span className="text-[7px] font-bold text-white/50">{s.name.substring(0,2).toUpperCase()}</span>
+                  <div key={s.name} className="relative group p-2.5 rounded-2xl border border-transparent hover:border-border/40 hover:bg-foreground/[0.02] transition-all duration-300">
+                    <div className="flex items-center justify-between gap-3 mb-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="relative">
+                          <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border text-[10px] font-bold ${isTop3 ? rankColors[i] : "border-border/40 bg-foreground/[0.02] text-muted-foreground/40"}`}>
+                            {isTop3 ? rankIcons[i] : (i + 1)}
+                          </div>
+                          {i === 0 && <div className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-amber-400 items-center justify-center rounded-full border-2 border-background flex shadow-lg animate-bounce">
+                             <Crown className="h-2 w-2 text-amber-900" />
+                          </div>}
                         </div>
-                        <span className="text-[11px] font-semibold text-white/60 truncate">{s.name}</span>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-bold text-foreground/90 truncate flex items-center gap-1.5">
+                            {s.name}
+                            {isTop3 && <span className={`text-[8px] px-1.5 py-0.5 rounded-full border uppercase tracking-tighter ${rankColors[i]}`}>
+                              {rankLabels[i]}
+                            </span>}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground/60">{s.count} Transaksi</p>
+                        </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[10px] font-bold text-white/70 tabular-nums">{fmtShort(s.total)}</p>
-                        <p className="text-[8px] text-muted-foreground/60">{s.count}×</p>
+                        <p className={`text-xs font-black tabular-nums ${i === 0 ? "text-primary" : "text-foreground/80"}`}>Rp {fmt(s.total)}</p>
                       </div>
                     </div>
-                    <div className="h-0.5 bg-white/[0.04] rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, background: i === 0 ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.18)" }} />
+                    {/* Progress Bar with Gradient */}
+                    <div className="h-1 bg-foreground/[0.04] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-1000 ease-out"
+                        style={{ 
+                          width: `${pct}%`, 
+                          background: i === 0 
+                            ? "linear-gradient(90deg, var(--primary) 0%, #fbbf24 100%)" 
+                            : "var(--foreground)",
+                          opacity: i === 0 ? 0.8 : i === 1 ? 0.4 : 0.15 
+                        }} />
                     </div>
                   </div>
                 );
@@ -426,7 +465,7 @@ export default function Dashboard() {
               <h3 className="text-sm font-semibold text-foreground/80">Transaksi Terbaru</h3>
               <p className="text-[10px] text-muted-foreground/60 mt-0.5">5 pesanan terakhir</p>
             </div>
-            <a href="/dashboard/transactions" className="text-[10px] text-muted-foreground/60 hover:text-white/60 transition-colors border border-border/40 rounded-lg px-2.5 py-1">
+            <a href="/dashboard/transactions" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors border border-border/40 rounded-lg px-2.5 py-1">
               Lihat semua →
             </a>
           </div>
@@ -441,25 +480,25 @@ export default function Dashboard() {
                 {/* Method icon */}
                 <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 border text-[9px] font-bold ${
                   trx.payment_method === "qris"
-                    ? "border-white/15 bg-accent/30 text-white/60"
-                    : "border-border/40 bg-white/[0.02] text-muted-foreground"
+                    ? "border-primary/20 bg-primary/10 text-primary"
+                    : "border-border/40 bg-foreground/[0.02] text-muted-foreground"
                 }`}>
                   {trx.payment_method === "qris" ? "QR" : "Rp"}
                 </div>
                 <div className="flex-1 min-w-0">
                   {/* Staff name */}
                   <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-[9px] font-semibold text-white/40 uppercase tracking-wide">
+                    <span className="text-[9px] font-semibold text-foreground/40 uppercase tracking-wide">
                       {trx.profiles?.name || "—"}
                     </span>
-                    <span className="text-[8px] text-white/15">·</span>
+                    <span className="text-[8px] text-foreground/10">·</span>
                     <span className="text-[9px] text-muted-foreground/40">{timeAgo(trx.created_at)}</span>
                   </div>
-                  <p className="text-[10px] text-white/50 truncate group-hover:text-white/75 transition-colors">
+                  <p className="text-[10px] text-foreground/50 truncate group-hover:text-foreground/75 transition-colors">
                     {trx.transaction_items.map(ti => `${ti.quantity}× ${ti.products?.name}`).join(", ")}
                   </p>
                 </div>
-                <span className="text-xs font-bold text-white/70 shrink-0 tabular-nums">
+                <span className="text-xs font-bold text-foreground/70 shrink-0 tabular-nums">
                   +{fmtShort(trx.total_amount)}
                 </span>
               </div>
@@ -493,13 +532,13 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className="text-[9px] font-mono text-muted-foreground/40 w-3 shrink-0">{i + 1}</span>
-                        <span className="text-xs text-white/60 truncate">{p.name}</span>
+                        <span className="text-xs text-foreground/60 truncate">{p.name}</span>
                       </div>
-                      <span className="text-[10px] font-bold text-white/70 tabular-nums shrink-0">{p.qty} pcs</span>
+                      <span className="text-[10px] font-bold text-foreground/70 tabular-nums shrink-0">{p.qty} pcs</span>
                     </div>
-                    <div className="h-0.5 bg-white/[0.04] rounded-full overflow-hidden">
+                    <div className="h-0.5 bg-foreground/[0.04] rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, background: i === 0 ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.18)" }} />
+                        style={{ width: `${pct}%`, background: i === 0 ? "rgba(var(--primary), 0.5)" : "rgba(var(--foreground), 0.18)", opacity: 0.5 }} />
                     </div>
                   </div>
                 );
@@ -528,7 +567,7 @@ export default function Dashboard() {
                         />
                         <Bar dataKey="qty" radius={[4, 4, 0, 0]} maxBarSize={32}>
                           {topProducts.map((_, i) => (
-                            <Cell key={i} fill={i === 0 ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.18)"} />
+                            <Cell key={i} fill="var(--foreground)" fillOpacity={i === 0 ? 0.55 : 0.18} />
                           ))}
                         </Bar>
                       </BarChart>

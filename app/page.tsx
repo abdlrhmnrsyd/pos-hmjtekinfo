@@ -15,21 +15,21 @@ export default function Home() {
       {/* Subtle ambient glow */}
       <div
         className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255,255,255,0.05) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(ellipse 60% 50% at 50% 0%, var(--foreground) 0%, transparent 70%)", opacity: 0.05 }}
       />
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)" }}
+        style={{ background: "linear-gradient(90deg, transparent, var(--border), transparent)", opacity: 0.3 }}
       />
 
       {/* Center content */}
       <div className="relative z-10 flex flex-col items-center gap-8">
         {/* Logo */}
         <div
-          className="h-16 w-16 rounded-2xl overflow-hidden border border-white/[0.12]"
-          style={{ boxShadow: "0 0 40px rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.4)" }}
+          className="h-16 w-16 rounded-2xl overflow-hidden border border-border/40"
+          style={{ boxShadow: "0 0 40px var(--foreground), 0 2px 8px rgba(0,0,0,0.15)" }}
         >
-          <img src="/logo.jpg" alt="HMJ Tekinfo Logo" className="w-full h-full object-cover" />
+          <img src="/logo.jpg" alt="HMJ Tekinfo Logo" className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity" />
         </div>
 
         {/* Title */}
@@ -52,7 +52,7 @@ export default function Home() {
       {/* Bottom line */}
       <div
         className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
-        style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)" }}
+        style={{ background: "linear-gradient(90deg, transparent, var(--border), transparent)", opacity: 0.2 }}
       />
     </div>
   );

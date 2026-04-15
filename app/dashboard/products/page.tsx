@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 interface Product { id: string; name: string; price: number; image_url: string; is_active: boolean; }
 
 const surface = "rounded-2xl border border-border/50 bg-card/50";
-const inputCls = "w-full h-10 bg-background/50 border border-border/50 rounded-xl px-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-border transition-all";
+const inputCls = "w-full h-10 bg-foreground/[0.03] border border-border/40 rounded-xl px-3.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-foreground/20 transition-all";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -83,11 +83,11 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-white/90 tracking-tight">Katalog Produk</h2>
-          <p className="text-xs text-muted-foreground/60 mt-0.5">Kelola produk yang tersedia di sistem kasir.</p>
+          <h2 className="text-lg font-bold text-foreground/90 tracking-tight">Katalog Produk</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Kelola produk yang tersedia di sistem kasir.</p>
         </div>
         <button onClick={handleOpenCreate}
-          className="flex items-center gap-2 h-9 px-4 rounded-xl bg-white text-black text-xs font-semibold hover:bg-white/90 transition-all w-fit">
+          className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all w-fit shadow-lg shadow-primary/20">
           <Plus className="h-3.5 w-3.5" /> Tambah Produk
         </button>
       </div>
@@ -100,61 +100,61 @@ export default function ProductsPage() {
         </div>
         <Table>
           <TableHeader>
-            <TableRow className="border-white/[0.05] hover:bg-transparent">
-              <TableHead className="h-10 px-5 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest w-[60px]">Foto</TableHead>
-              <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Nama</TableHead>
-              <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Harga</TableHead>
-              <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Status</TableHead>
-              <TableHead className="h-10 text-right px-5 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Aksi</TableHead>
+            <TableRow className="border-border/30 hover:bg-transparent">
+              <TableHead className="h-10 px-5 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest w-[60px]">Foto</TableHead>
+              <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Nama</TableHead>
+              <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Harga</TableHead>
+              <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Status</TableHead>
+              <TableHead className="h-10 text-right px-5 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow className="border-white/[0.04] hover:bg-transparent">
+              <TableRow className="border-border/10 hover:bg-transparent">
                 <TableCell colSpan={5} className="text-center h-32">
                   <div className="flex items-center justify-center gap-2">
-                    <div className="h-3.5 w-3.5 border border-white/20 border-t-white/70 rounded-full animate-spin" />
+                    <div className="h-3.5 w-3.5 border border-primary/20 border-t-primary rounded-full animate-spin" />
                     <span className="text-xs text-muted-foreground">Memuat...</span>
                   </div>
                 </TableCell>
               </TableRow>
             ) : products.length === 0 ? (
-              <TableRow className="border-white/[0.04] hover:bg-transparent">
+              <TableRow className="border-border/10 hover:bg-transparent">
                 <TableCell colSpan={5} className="text-center h-32">
-                  <p className="text-xs text-white/20">Belum ada produk. Tambah produk pertama Anda.</p>
+                  <p className="text-xs text-muted-foreground/30">Belum ada produk. Tambah produk pertama Anda.</p>
                 </TableCell>
               </TableRow>
             ) : products.map(p => (
-              <TableRow key={p.id} className="border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
+              <TableRow key={p.id} className="border-border/10 hover:bg-foreground/[0.01] transition-colors group">
                 <TableCell className="px-5 py-3">
-                  <div className="h-9 w-9 rounded-xl overflow-hidden border border-border/40 bg-white/[0.02] group-hover:border-white/15 transition-all">
+                  <div className="h-9 w-9 rounded-xl overflow-hidden border border-border/40 bg-foreground/[0.02] group-hover:border-foreground/20 transition-all">
                     {p.image_url ? <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
                       : <div className="h-full w-full flex items-center justify-center text-sm">🍦</div>}
                   </div>
                 </TableCell>
-                <TableCell className="text-sm font-medium text-white/70">{p.name}</TableCell>
+                <TableCell className="text-sm font-medium text-foreground/70">{p.name}</TableCell>
                 <TableCell className="text-sm font-semibold text-foreground/80">Rp {p.price.toLocaleString("id-ID")}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border ${
-                    p.is_active ? "border-white/15 text-white/70 bg-white/[0.06]"
-                                : "border-white/[0.05] text-muted-foreground/60 bg-transparent"
+                    p.is_active ? "border-primary/20 text-primary bg-primary/10"
+                                : "border-border/40 text-muted-foreground/40 bg-transparent"
                   }`}>
-                    <span className={`h-1 w-1 rounded-full ${p.is_active ? "bg-white/60" : "bg-white/20"}`} />
+                    <span className={`h-1 w-1 rounded-full ${p.is_active ? "bg-primary" : "bg-muted-foreground/20"}`} />
                     {p.is_active ? "Aktif" : "Nonaktif"}
                   </span>
                 </TableCell>
                 <TableCell className="text-right px-5">
-                  <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                  <div className="flex justify-end gap-1.5 transition-all">
                     <button onClick={() => handleOpenEdit(p)}
-                      className="h-7 w-7 rounded-lg text-muted-foreground hover:text-white/70 hover:bg-white/[0.05] flex items-center justify-center transition-colors">
+                      className="h-7 w-7 rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-foreground/[0.08] flex items-center justify-center transition-colors border border-transparent hover:border-border/30">
                       <Edit className="h-3 w-3" />
                     </button>
                     <button onClick={() => toggleStatus(p.id, p.is_active)} title={p.is_active ? "Nonaktifkan" : "Aktifkan"}
-                      className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/[0.05] ${p.is_active ? "text-white/50" : "text-white/20 hover:text-white/40"}`}>
+                      className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors hover:bg-foreground/[0.08] border border-transparent hover:border-border/30 ${p.is_active ? "text-primary/70" : "text-muted-foreground/30 hover:text-muted-foreground"}`}>
                       <IceCream className="h-3 w-3" />
                     </button>
                     <button onClick={() => deleteProduct(p.id)}
-                      className="h-7 w-7 rounded-lg text-white/20 hover:text-red-400/60 hover:bg-red-400/5 flex items-center justify-center transition-colors">
+                      className="h-7 w-7 rounded-lg text-muted-foreground/20 hover:text-red-400 hover:bg-red-400/10 flex items-center justify-center transition-colors border border-transparent hover:border-red-400/20">
                       <Trash2 className="h-3 w-3" />
                     </button>
                   </div>
@@ -168,13 +168,12 @@ export default function ProductsPage() {
       {/* Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent
-          className="sm:max-w-[420px] p-0 overflow-hidden rounded-2xl border-white/[0.08]"
-          style={{ background: "rgba(10,10,10,0.96)", backdropFilter: "blur(24px)", boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 24px 60px rgba(0,0,0,0.8)" }}
+          className="sm:max-w-[420px] p-0 overflow-hidden rounded-2xl border-border/50 bg-background/95 backdrop-blur-2xl shadow-2xl"
         >
           <form onSubmit={handleSave} className="p-6 space-y-5">
             <DialogHeader>
-              <DialogTitle className="text-sm font-bold text-white/90">{editingId ? "Edit Produk" : "Tambah Produk"}</DialogTitle>
-              <p className="text-[10px] text-muted-foreground">{editingId ? "Ubah detail produk." : "Isi detail produk baru."}</p>
+              <DialogTitle className="text-sm font-bold text-foreground/90">{editingId ? "Edit Produk" : "Tambah Produk"}</DialogTitle>
+              <p className="text-[10px] text-muted-foreground/50">{editingId ? "Ubah detail produk." : "Isi detail produk baru."}</p>
             </DialogHeader>
 
             <div className="space-y-3.5">
@@ -189,19 +188,19 @@ export default function ProductsPage() {
               <div className="space-y-1.5">
                 <label className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Foto Produk</label>
                 <div className="flex gap-3 items-start">
-                  <div className="h-16 w-16 rounded-xl overflow-hidden border border-white/[0.07] bg-white/[0.02] flex items-center justify-center shrink-0">
+                  <div className="h-16 w-16 rounded-xl overflow-hidden border border-border/40 bg-foreground/[0.02] flex items-center justify-center shrink-0">
                     {(imagePreviewUrl || formData.image_url)
                       ? <img src={imagePreviewUrl || formData.image_url} alt="Preview" className="w-full h-full object-cover" onError={e => Object.assign((e.currentTarget as HTMLImageElement).style, { display: "none" })} />
-                      : <ImageIcon className="h-5 w-5 text-white/15" />}
+                      : <ImageIcon className="h-5 w-5 text-muted-foreground/20" />}
                   </div>
                   <div className="flex-1 space-y-2">
                     <Input type="file" accept="image/*"
-                      className="cursor-pointer file:text-[10px] file:font-medium file:text-white/50 file:bg-white/[0.05] file:border-0 hover:file:bg-white/[0.08] text-[10px] h-9 bg-transparent border border-white/[0.07] rounded-xl p-1.5 text-muted-foreground"
+                      className="cursor-pointer file:text-[10px] file:font-medium file:text-muted-foreground file:bg-foreground/[0.05] file:border-0 hover:file:bg-foreground/[0.08] text-[10px] h-9 bg-transparent border border-border/40 rounded-xl p-1.5 text-muted-foreground"
                       onChange={e => { const f = e.target.files?.[0]; if (f) { setImageFile(f); setImagePreviewUrl(URL.createObjectURL(f)); } }} />
                     <div className="flex items-center gap-2">
-                      <div className="h-px bg-white/[0.05] flex-1" />
-                      <span className="text-[9px] text-white/20">atau URL</span>
-                      <div className="h-px bg-white/[0.05] flex-1" />
+                      <div className="h-px bg-border/20 flex-1" />
+                      <span className="text-[9px] text-muted-foreground/30">atau URL</span>
+                      <div className="h-px bg-border/20 flex-1" />
                     </div>
                     <input type="url" placeholder="https://..." className={inputCls + " h-9 text-xs"}
                       value={formData.image_url}
@@ -211,14 +210,14 @@ export default function ProductsPage() {
               </div>
             </div>
 
-            <DialogFooter className="flex gap-2 pt-1">
+            <DialogFooter className="flex gap-2 pt-1 pb-6 px-6">
               <button type="button" onClick={() => setIsOpen(false)}
-                className="h-9 px-4 rounded-xl text-xs font-medium text-muted-foreground hover:text-white/60 hover:bg-white/[0.04] transition-colors">
+                className="h-9 px-4 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04] transition-colors">
                 Batal
               </button>
               <button type="submit" disabled={saving || uploadingImage}
-                className="h-9 px-5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-white/90 transition-all disabled:opacity-50">
-                {saving || uploadingImage ? "Menyimpan..." : "Simpan"}
+                className="h-9 px-5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all disabled:opacity-50">
+                {saving || uploadingImage ? "Menyimpan..." : "Simpan Produk"}
               </button>
             </DialogFooter>
           </form>

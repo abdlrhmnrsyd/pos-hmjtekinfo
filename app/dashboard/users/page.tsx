@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import {
   Users, Search, X, TrendingUp, ShoppingBag, Coins,
   CreditCard, Banknote, ChevronDown, ChevronUp,
+  Crown, Star, Medal,
 } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -39,12 +40,29 @@ function RoleBadge({ role }: { role: string }) {
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold border uppercase tracking-widest ${
         isAdmin
-          ? "border-white/20 bg-white/[0.08] text-white/70"
-          : "border-white/[0.05] bg-transparent text-muted-foreground/60"
+          ? "border-primary/20 bg-primary/10 text-primary"
+          : "border-border/40 bg-foreground/[0.04] text-muted-foreground/60"
       }`}
     >
       {isAdmin ? "Admin" : role === "staff" ? "Kasir" : "User"}
     </span>
+  );
+}
+
+function BintangBadge({ rank }: { rank: number }) {
+  const colors = [
+    "text-amber-400 bg-amber-400/10 border-amber-400/20", // Gold
+    "text-slate-300 bg-slate-400/10 border-slate-400/20", // Silver
+    "text-orange-400 bg-orange-400/10 border-orange-400/20" // Bronze
+  ];
+  const icons = [<Crown className="h-2.5 w-2.5" />, <Medal className="h-2.5 w-2.5" />, <Star className="h-2.5 w-2.5" />];
+  const labels = ["Bintang Danus 1", "Bintang Danus 2", "Bintang Danus 3"];
+
+  return (
+    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[8px] font-black uppercase tracking-tighter ${colors[rank - 1]}`}>
+      {icons[rank - 1]}
+      {labels[rank - 1]}
+    </div>
   );
 }
 
@@ -58,7 +76,7 @@ function SortHeader({
   return (
     <button
       onClick={() => onClick(sortKey)}
-      className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 hover:text-white/60 transition-colors group"
+      className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 hover:text-foreground/60 transition-colors group"
     >
       {label}
       <span className={`transition-opacity ${active ? "opacity-100" : "opacity-0 group-hover:opacity-40"}`}>
@@ -191,8 +209,8 @@ export default function UsersPage() {
       {/* ── Header ── */}
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-lg font-bold text-white/90 tracking-tight">Daftar Pengguna</h2>
-          <p className="text-xs text-muted-foreground/60 mt-0.5">Semua akun terdaftar beserta riwayat transaksinya.</p>
+          <h2 className="text-lg font-bold text-foreground tracking-tight">Daftar Pengguna</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Semua akun terdaftar beserta riwayat transaksinya.</p>
         </div>
 
         {/* Summary pills */}
@@ -202,8 +220,8 @@ export default function UsersPage() {
             { label: `${totalTrx} transaksi`,    icon: ShoppingBag },
             { label: `Rp ${fmtShort(totalRevenue)}`, icon: Coins  },
           ].map(({ label, icon: Icon }) => (
-            <span key={label} className="h-7 px-3 rounded-xl border border-white/[0.07] bg-white/[0.02] text-[10px] text-white/50 font-semibold flex items-center gap-1.5">
-              <Icon className="h-3 w-3 text-muted-foreground" />
+            <span key={label} className="h-7 px-3 rounded-xl border border-border bg-accent/20 text-[10px] text-muted-foreground font-semibold flex items-center gap-1.5">
+              <Icon className="h-3 w-3 text-muted-foreground/40" />
               {label}
             </span>
           ))}
@@ -218,14 +236,14 @@ export default function UsersPage() {
           { title: "Total Transaksi",  value: totalTrx,                    icon: ShoppingBag, sub: "semua pengguna"              },
           { title: "Total Pendapatan", value: `Rp ${fmtShort(totalRevenue)}`, icon: Coins,    sub: "seluruh transaksi"           },
         ].map(({ title, value, icon: Icon, sub }) => (
-          <div key={title} className="group rounded-2xl border border-white/[0.07] bg-white/[0.025] hover:bg-white/[0.04] hover:border-white/[0.12] transition-all p-5">
+          <div key={title} className="group rounded-2xl border border-border/50 bg-card/50 hover:bg-accent/5 transition-all p-5">
             <div className="flex items-start justify-between mb-4">
               <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-[0.15em]">{title}</span>
-              <div className="h-7 w-7 rounded-xl bg-white/[0.04] border border-border/40 flex items-center justify-center group-hover:bg-white/[0.08] transition-all">
-                <Icon className="h-3.5 w-3.5 text-white/35 group-hover:text-white/70 transition-colors" />
+              <div className="h-7 w-7 rounded-xl bg-foreground/[0.04] border border-border/40 flex items-center justify-center group-hover:bg-foreground/[0.08] transition-all">
+                <Icon className="h-3.5 w-3.5 text-foreground/35 group-hover:text-foreground/70 transition-colors" />
               </div>
             </div>
-            <p className="text-[1.6rem] font-bold text-white tracking-tight leading-none mb-2">{value}</p>
+            <p className="text-[1.6rem] font-bold text-foreground tracking-tight leading-none mb-2">{value}</p>
             <p className="text-[10px] text-muted-foreground/60">{sub}</p>
           </div>
         ))}
@@ -235,28 +253,28 @@ export default function UsersPage() {
       <div className="flex items-center gap-3 flex-wrap">
         {/* Search */}
         <div className="relative group flex-1 min-w-[200px] max-w-[320px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40 group-focus-within:text-white/50 transition-colors pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40 group-focus-within:text-foreground/50 transition-colors pointer-events-none" />
           <input
             placeholder="Cari nama, ID pengguna..."
-            className="w-full h-9 pl-8 pr-8 bg-white/[0.03] border border-white/[0.07] rounded-xl text-xs text-white/70 placeholder:text-muted-foreground/40 outline-none focus:border-white/20 transition-all"
+            className="w-full h-9 pl-8 pr-8 bg-foreground/[0.03] border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-foreground/20 transition-all"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
           {search && (
-            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-white/60 transition-colors">
+            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-foreground/60 transition-colors">
               <X className="h-3 w-3" />
             </button>
           )}
         </div>
 
         {/* Role filter */}
-        <div className="flex items-center border border-white/[0.07] rounded-xl overflow-hidden bg-white/[0.02] p-0.5 gap-0.5">
+        <div className="flex items-center border border-border/50 rounded-xl overflow-hidden bg-foreground/[0.02] p-0.5 gap-0.5">
           {(["all", "admin", "staff", "user"] as const).map(r => (
             <button
               key={r}
               onClick={() => setRoleFilter(r)}
               className={`h-8 px-3.5 rounded-[10px] text-[11px] font-semibold transition-all ${
-                roleFilter === r ? "bg-white text-black" : "text-white/35 hover:text-white/70"
+                roleFilter === r ? "bg-primary text-primary-foreground" : "text-foreground/35 hover:text-foreground/70"
               }`}
             >
               {r === "all" ? "Semua" : r === "admin" ? "Admin" : r === "staff" ? "Kasir" : "User"}
@@ -277,7 +295,7 @@ export default function UsersPage() {
 
         <Table>
           <TableHeader>
-            <TableRow className="border-white/[0.05] hover:bg-transparent">
+            <TableRow className="border-border/30 hover:bg-transparent">
               <TableHead className="h-10 px-5 w-[180px]">
                 <SortHeader label="Nama" sortKey="name" current={sortKey} dir={sortDir} onClick={handleSort} />
               </TableHead>
@@ -301,19 +319,19 @@ export default function UsersPage() {
 
           <TableBody>
             {loading ? (
-              <TableRow className="border-white/[0.04] hover:bg-transparent">
+              <TableRow className="border-border/10 hover:bg-transparent">
                 <TableCell colSpan={6} className="text-center h-40">
                   <div className="flex items-center justify-center gap-2">
-                    <div className="h-3.5 w-3.5 border border-white/20 border-t-white/70 rounded-full animate-spin" />
+                    <div className="h-3.5 w-3.5 border border-primary/20 border-t-primary rounded-full animate-spin" />
                     <span className="text-xs text-muted-foreground">Memuat data pengguna...</span>
                   </div>
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow className="border-white/[0.04] hover:bg-transparent">
+              <TableRow className="border-border/10 hover:bg-transparent">
                 <TableCell colSpan={6} className="text-center h-40">
                   <div className="flex flex-col items-center gap-2">
-                    <Users className="h-6 w-6 text-white/10" />
+                    <Users className="h-6 w-6 text-foreground/5" />
                     <p className="text-xs text-muted-foreground/40">Tidak ada pengguna ditemukan.</p>
                   </div>
                 </TableCell>
@@ -321,21 +339,30 @@ export default function UsersPage() {
             ) : filtered.map(user => {
               const trxPct = Math.round((user.trxCount / maxTrx) * 100);
               const revPct = Math.round((user.trxTotal / maxRev) * 100);
+              const rankEntry = [...users]
+                .filter(u => u.trxTotal > 0)
+                .sort((a, b) => b.trxTotal - a.trxTotal)
+                .findIndex(u => u.id === user.id);
+              const rank = rankEntry !== -1 ? rankEntry + 1 : null;
+
               return (
-                <TableRow key={user.id} className="border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
+                <TableRow key={user.id} className="border-border/20 hover:bg-foreground/[0.01] transition-colors group">
 
                   {/* Nama */}
                   <TableCell className="px-5 py-3.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-xl bg-white/[0.05] border border-white/[0.07] flex items-center justify-center shrink-0">
-                        <span className="text-[10px] font-bold text-white/50">
+                      <div className="h-8 w-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        <span className="text-[10px] font-bold text-primary">
                           {user.name.substring(0, 2).toUpperCase()}
                         </span>
                       </div>
                       <div>
-                        <p className="text-[12px] font-semibold text-white/70 group-hover:text-white/90 transition-colors leading-tight">
-                          {user.name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[12px] font-semibold text-foreground group-hover:text-primary transition-colors leading-tight">
+                            {user.name}
+                          </p>
+                          {rank && rank <= 3 && <BintangBadge rank={rank} />}
+                        </div>
                         <p className="text-[9px] font-mono text-muted-foreground/40 mt-0.5">
                           {user.id.substring(0, 12)}…
                         </p>
@@ -355,16 +382,17 @@ export default function UsersPage() {
                         <span className="text-sm font-bold text-foreground/80 tabular-nums">{user.trxCount}</span>
                         <span className="text-[9px] text-muted-foreground/60">transaksi</span>
                       </div>
-                      <div className="h-0.5 bg-white/[0.04] rounded-full overflow-hidden w-[90px]">
+                      <div className="h-0.5 bg-foreground/[0.04] rounded-full overflow-hidden w-[90px]">
                         <div
                           className="h-full rounded-full transition-all duration-700"
                           style={{
                             width: `${trxPct}%`,
                             background: trxPct >= 75
-                              ? "rgba(255,255,255,0.55)"
+                              ? "var(--foreground)"
                               : trxPct >= 40
-                              ? "rgba(255,255,255,0.30)"
-                              : "rgba(255,255,255,0.12)",
+                              ? "var(--foreground)"
+                              : "var(--foreground)",
+                            opacity: trxPct >= 75 ? 0.55 : trxPct >= 40 ? 0.30 : 0.12,
                           }}
                         />
                       </div>
@@ -378,12 +406,13 @@ export default function UsersPage() {
                         {user.trxTotal > 0 ? `Rp ${fmtShort(user.trxTotal)}` : "—"}
                       </p>
                       {user.trxTotal > 0 && (
-                        <div className="h-0.5 bg-white/[0.04] rounded-full overflow-hidden w-[90px]">
+                        <div className="h-0.5 bg-foreground/[0.04] rounded-full overflow-hidden w-[90px]">
                           <div
                             className="h-full rounded-full transition-all duration-700"
                             style={{
                               width: `${revPct}%`,
-                              background: "rgba(255,255,255,0.22)",
+                              background: "var(--foreground)",
+                              opacity: 0.22,
                             }}
                           />
                         </div>
@@ -395,15 +424,15 @@ export default function UsersPage() {
                   <TableCell>
                     {user.trxCount > 0 ? (
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold border border-white/15 bg-white/[0.05] text-white/60">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold border border-primary/20 bg-primary/10 text-primary">
                           <CreditCard className="h-2.5 w-2.5" /> {user.qrisCount}
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold border border-white/[0.05] text-muted-foreground/60">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold border border-border/40 text-muted-foreground/60">
                           <Banknote className="h-2.5 w-2.5" /> {user.cashCount}
                         </span>
                       </div>
                     ) : (
-                      <span className="text-[10px] text-white/15">—</span>
+                      <span className="text-[10px] text-foreground/5">—</span>
                     )}
                   </TableCell>
 
@@ -411,7 +440,7 @@ export default function UsersPage() {
                   <TableCell className="pr-5">
                     {user.lastTrx ? (
                       <div>
-                        <p className="text-[10px] font-semibold text-white/50 whitespace-nowrap">
+                        <p className="text-[10px] font-semibold text-foreground/50 whitespace-nowrap">
                           {timeAgo(user.lastTrx)}
                         </p>
                         <p className="text-[9px] text-muted-foreground/40 mt-0.5 whitespace-nowrap">
@@ -419,7 +448,7 @@ export default function UsersPage() {
                         </p>
                       </div>
                     ) : (
-                      <span className="text-[10px] text-white/15 italic">Belum transaksi</span>
+                      <span className="text-[10px] text-foreground/10 italic">Belum transaksi</span>
                     )}
                   </TableCell>
                 </TableRow>
@@ -434,10 +463,10 @@ export default function UsersPage() {
             <span className="text-[10px] text-muted-foreground/60">{filtered.length} pengguna ditampilkan</span>
             <div className="flex items-center gap-4">
               <span className="text-[10px] text-muted-foreground/60">
-                Total: <span className="font-bold text-white/50">{totalTrx} transaksi</span>
+                Total: <span className="font-bold text-foreground/50">{totalTrx} transaksi</span>
               </span>
               <span className="text-[10px] text-muted-foreground/60">
-                Revenue: <span className="font-bold text-white/50 tabular-nums">Rp {fmt(totalRevenue)}</span>
+                Revenue: <span className="font-bold text-foreground/50 tabular-nums">Rp {fmt(totalRevenue)}</span>
               </span>
             </div>
           </div>
