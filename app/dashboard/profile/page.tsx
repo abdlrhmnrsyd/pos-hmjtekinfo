@@ -10,7 +10,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 /* ─── Types ─── */
-interface TransactionItem { quantity: number; products: { name: string } | null; }
+interface TransactionItem { quantity: number; products: { name: string } | { name: string }[] | null; }
 interface Transaction {
   id: string;
   created_at: string;
@@ -128,7 +128,16 @@ export default function ProfilePage() {
         .eq("staff_id", uid)
         .order("created_at", { ascending: false });
 
-      if (trxRaw) setTransactions(trxRaw as Transaction[]);
+      if (trxRaw) {
+        const mapped: Transaction[] = (trxRaw as any[]).map(t => ({
+          ...t,
+          transaction_items: t.transaction_items.map((ti: any) => ({
+            ...ti,
+            products: Array.isArray(ti.products) ? ti.products[0] : ti.products
+          }))
+        }));
+        setTransactions(mapped);
+      }
       setTrxLoading(false);
     })();
   }, []);

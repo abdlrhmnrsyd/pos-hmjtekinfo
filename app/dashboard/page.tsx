@@ -12,7 +12,7 @@ import {
 } from "recharts";
 
 /* ─── Types ─── */
-interface TransactionItem { quantity: number; products: { name: string } | null; }
+interface TransactionItem { quantity: number; products: { name: string } | { name: string }[] | null; }
 interface Transaction {
   id: string; created_at: string; total_amount: number; payment_method: string;
   profiles: { name: string } | null;
@@ -188,10 +188,14 @@ export default function Dashboard() {
 
       const profileMap = new Map((profilesRaw || []).map((p: any) => [p.id, p.name]));
 
-      // Step 3: Merge
+      // Step 3: Merge & Map
       const merged: Transaction[] = (trxRaw as any[]).map(t => ({
         ...t,
         profiles: profileMap.has(t.staff_id) ? { name: profileMap.get(t.staff_id)! } : null,
+        transaction_items: (t.transaction_items || []).map((ti: any) => ({
+          ...ti,
+          products: Array.isArray(ti.products) ? ti.products[0] : ti.products
+        }))
       }));
 
       if (merged) {

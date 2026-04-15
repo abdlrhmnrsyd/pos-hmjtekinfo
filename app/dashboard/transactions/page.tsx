@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { User, CreditCard, Banknote, Search, X } from "lucide-react";
 
-interface TransactionItem { quantity: number; products: { name: string } | null; }
+interface TransactionItem { quantity: number; products: { name: string } | { name: string }[] | null; }
 interface StaffProfile   { name: string; }
 interface Transaction {
   id: string; created_at: string; total_amount: number;
@@ -41,10 +41,14 @@ export default function TransactionsPage() {
 
     const profileMap = new Map((profilesRaw || []).map((p: any) => [p.id, p.name]));
 
-    // Step 3: Merge
+    // Step 3: Merge & Map
     const merged: Transaction[] = (trxRaw as any[]).map(t => ({
       ...t,
       profiles: profileMap.has(t.staff_id) ? { name: profileMap.get(t.staff_id)! } : null,
+      transaction_items: (t.transaction_items || []).map((ti: any) => ({
+        ...ti,
+        products: Array.isArray(ti.products) ? ti.products[0] : ti.products
+      }))
     }));
 
     setTransactions(merged);
