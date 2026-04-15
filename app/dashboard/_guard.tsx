@@ -36,10 +36,10 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
   if (status === "loading") {
     return (
-      <div className="flex h-screen items-center justify-center bg-[oklch(0.06_0_0)]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-5 w-5 animate-spin rounded-full border border-white/20 border-t-white/80" />
-          <p className="text-[10px] text-white/25 uppercase tracking-widest">Memverifikasi akses...</p>
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4 text-foreground">
+          <div className="h-5 w-5 animate-spin rounded-full border border-border border-t-foreground" />
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Memverifikasi akses...</p>
         </div>
       </div>
     );

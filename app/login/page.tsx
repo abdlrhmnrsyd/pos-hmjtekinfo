@@ -41,6 +41,8 @@ export default function LoginPage() {
       });
       if (authError) { setError("Password salah."); setLoading(false); return; }
       if (!data.user) return;
+      
+      // Admin dan Staff semuanya diarahkan ke Kasir terlebih dahulu
       router.push("/kasir");
     } catch { setError("Terjadi kesalahan. Coba lagi."); } 
     finally { setLoading(false); }
@@ -57,24 +59,27 @@ export default function LoginPage() {
       if (data.user) await supabase.from("profiles").upsert({ id: data.user.id, name: regName, email: regEmail });
       if (data.user && data.session === null) {
         setSuccess("Akun dibuat! Cek email untuk konfirmasi.");
-      } else { setSuccess("Berhasil! Mengalihkan..."); setTimeout(() => { window.location.href = "/dashboard"; }, 1500); }
+      } else { 
+        setSuccess("Berhasil! Mengalihkan..."); 
+        setTimeout(() => { window.location.href = "/kasir"; }, 1500); 
+      }
     } catch { setError("Terjadi kesalahan saat mendaftar."); }
     finally { setLoading(false); }
   };
 
-  const inputClass = "w-full h-10 bg-white/[0.04] border border-white/10 rounded-xl px-3.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-white/30 focus:bg-white/[0.06] transition-all";
+  const inputClass = "w-full h-10 bg-background/50 border border-border/50 rounded-xl px-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-border transition-all";
 
   return (
-    <div className="min-h-screen bg-[oklch(0.06_0_0)] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 relative overflow-hidden">
       {/* Radial ambient */}
       <div
         className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px]"
-        style={{ background: "radial-gradient(ellipse, rgba(255,255,255,0.04) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(ellipse, var(--border) 0%, transparent 70%)", opacity: 0.1 }}
       />
       {/* Top line */}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)" }}
+        style={{ background: "linear-gradient(90deg, transparent, var(--border), transparent)", opacity: 0.3 }}
       />
 
       <div className="relative z-10 w-full max-w-[340px]">
@@ -82,46 +87,40 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-8 gap-3">
           <button
             onClick={handleSecretClick}
-            className="h-12 w-12 rounded-2xl overflow-hidden border border-white/[0.10] transition-all active:scale-95"
+            className="h-12 w-12 rounded-2xl overflow-hidden border border-border transition-all active:scale-95"
           >
             <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </button>
           <div className="text-center">
-            <h1 className="text-lg font-bold text-white tracking-tight">
+            <h1 className="text-lg font-bold text-foreground/90 tracking-tight">
               {showRegister ? "Buat Akun" : "ICE HMJ Tekinfo"}
             </h1>
-            <p className="text-xs text-white/30 mt-0.5">
+            <p className="text-xs text-muted-foreground/30 mt-0.5">
               {showRegister ? "Daftarkan akun kasir baru" : "Masuk ke sistem kasir"}
             </p>
           </div>
         </div>
 
-        {/* Card */}
         <div
-          className="rounded-2xl p-6 relative overflow-hidden"
-          style={{
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.06)",
-          }}
+          className="rounded-2xl p-6 relative overflow-hidden surface"
         >
           {showRegister ? (
             <form onSubmit={handleRegister} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Nama</label>
+                <label className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Nama</label>
                 <input className={inputClass} type="text" placeholder="Nama lengkap" value={regName} onChange={e => setRegName(e.target.value)} required />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Email</label>
+                <label className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Email</label>
                 <input className={inputClass} type="email" placeholder="nama@email.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} required />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Password</label>
+                <label className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Password</label>
                 <input className={inputClass} type="password" placeholder="Min. 6 karakter" value={regPassword} onChange={e => setRegPassword(e.target.value)} required minLength={6} />
               </div>
 
               {error && <p className="text-xs text-red-400/80 border border-red-400/10 bg-red-400/5 rounded-lg p-2.5">{error}</p>}
-              {success && <p className="text-xs text-white/60 border border-white/10 bg-white/[0.04] rounded-lg p-2.5">{success}</p>}
+              {success && <p className="text-xs text-muted-foreground/60 border border-white/10 bg-white/[0.04] rounded-lg p-2.5">{success}</p>}
 
               <div className="pt-1 space-y-2">
                 <button type="submit" disabled={loading}
@@ -129,7 +128,7 @@ export default function LoginPage() {
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buat Akun"}
                 </button>
                 <button type="button" onClick={() => setShowRegister(false)}
-                  className="w-full text-xs text-white/25 hover:text-white/50 transition-colors py-1">
+                  className="w-full text-xs text-muted-foreground/25 hover:text-muted-foreground/50 transition-colors py-1">
                   ← Kembali ke halaman masuk
                 </button>
               </div>
@@ -137,11 +136,11 @@ export default function LoginPage() {
           ) : (
             <form onSubmit={handleLogin} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Nama</label>
+                <label className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Nama</label>
                 <input className={inputClass} type="text" placeholder="Nama lengkap Anda" value={name} onChange={e => setName(e.target.value)} required />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Password</label>
+                <label className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Password</label>
                 <input className={inputClass} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
               </div>
 
@@ -157,7 +156,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p className="text-center text-[10px] text-white/15 mt-6">ICE HMJ Tekinfo © 2025</p>
+        <p className="text-center text-[10px] text-muted-foreground/15 mt-6">ICE HMJ Tekinfo © 2025</p>
       </div>
     </div>
   );

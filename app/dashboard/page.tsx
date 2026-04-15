@@ -31,15 +31,15 @@ function StatCard({ title, value, sub, icon: Icon }: {
   title: string; value: string; sub: string; icon: React.ElementType;
 }) {
   return (
-    <div className="group rounded-2xl border border-white/[0.07] bg-white/[0.025] hover:bg-white/[0.04] hover:border-white/[0.12] transition-all duration-300 p-5">
+    <div className="group rounded-2xl border border-border/50 surface hover:bg-white/[0.04] hover:border-white/[0.12] transition-all duration-300 p-5">
       <div className="flex items-start justify-between mb-4">
-        <span className="text-[9px] font-semibold text-white/30 uppercase tracking-[0.15em]">{title}</span>
-        <div className="h-7 w-7 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center group-hover:bg-white/[0.08] transition-all">
+        <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-[0.15em]">{title}</span>
+        <div className="h-7 w-7 rounded-xl bg-white/[0.04] border border-border/40 flex items-center justify-center group-hover:bg-white/[0.08] transition-all">
           <Icon className="h-3.5 w-3.5 text-white/35 group-hover:text-white/70 transition-colors" />
         </div>
       </div>
       <p className="text-[1.6rem] font-bold text-white tracking-tight leading-none mb-2">{value}</p>
-      <p className="text-[10px] text-white/25">{sub}</p>
+      <p className="text-[10px] text-muted-foreground/60">{sub}</p>
     </div>
   );
 }
@@ -50,7 +50,7 @@ function ChartTooltip({ active, payload }: any) {
   return (
     <div className="p-3 rounded-xl shadow-2xl min-w-[150px]"
       style={{ background: "rgba(18,18,18,0.97)", border: "1px solid rgba(255,255,255,0.10)", backdropFilter: "blur(20px)" }}>
-      <p className="text-[9px] text-white/30 uppercase tracking-wider mb-1">{payload[0]?.payload?.label}</p>
+      <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">{payload[0]?.payload?.label}</p>
       <p className="text-base font-bold text-white">Rp {fmt(Number(payload[0]?.value || 0))}</p>
     </div>
   );
@@ -64,7 +64,7 @@ function PeriodTabs({ value, onChange }: { value: Period; onChange: (p: Period) 
     { key: "monthly", label: "Bulanan" },
   ];
   return (
-    <div className="flex items-center border border-white/[0.07] rounded-2xl overflow-hidden bg-white/[0.02] p-1 gap-1">
+    <div className="flex items-center border border-border/50 rounded-2xl overflow-hidden bg-white/[0.02] p-1 gap-1">
       {tabs.map(t => (
         <button key={t.key} onClick={() => onChange(t.key)}
           className={`h-8 px-4 rounded-xl text-[11px] font-semibold transition-all ${
@@ -253,55 +253,55 @@ export default function Dashboard() {
   };
 
   if (loading) return (
-    <div className="flex h-full items-center justify-center min-h-[60vh]">
-      <div className="h-4 w-4 animate-spin rounded-full border border-white/20 border-t-white/80" />
+    <div className="flex h-full items-center justify-center min-h-[60vh] bg-background">
+      <div className="h-4 w-4 animate-spin rounded-full border border-border border-t-foreground" />
     </div>
   );
 
   return (
-    <div className="space-y-7 pb-16 max-w-[1400px]">
+    <div className="space-y-7 pb-16 max-w-[1400px] text-foreground">
 
       {/* ── Header ── */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-xl font-bold text-white/90 tracking-tight">Dashboard Admin</h2>
-          <p className="text-xs text-white/30 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {now.toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-mono font-bold text-white/80 tabular-nums tracking-tight">
+          <p className="text-2xl font-mono font-bold text-foreground/80 tabular-nums tracking-tight">
             {now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           </p>
           <div className="flex items-center justify-end gap-1.5 mt-0.5">
             <span className="h-1.5 w-1.5 rounded-full bg-white/50 animate-[dot-pulse_2s_ease-in-out_infinite]" />
-            <span className="text-[9px] text-white/25 uppercase tracking-widest">Live</span>
+            <span className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">Live</span>
           </div>
         </div>
       </div>
 
       {/* ── Period selector + summary banner ── */}
       <div
-        className="rounded-2xl border border-white/[0.07] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5"
+        className="rounded-2xl border border-border/50 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5"
         style={{ background: "rgba(255,255,255,0.025)" }}
       >
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <CalendarDays className="h-3.5 w-3.5 text-white/30" />
-            <span className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">Laporan</span>
+            <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Laporan</span>
           </div>
-          <p className="text-sm font-bold text-white/80">{periodLabel}</p>
-          <p className="text-[10px] text-white/25 mt-0.5">
+          <p className="text-sm font-bold text-foreground/80">{periodLabel}</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5">
             {periodCount} transaksi · {periodItems} item terjual
           </p>
         </div>
         <div className="flex items-center gap-6 flex-wrap">
           <div className="text-right">
-            <p className="text-[9px] text-white/25 uppercase tracking-widest">Total Pendapatan</p>
+            <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">Total Pendapatan</p>
             <p className="text-2xl font-bold text-white tabular-nums tracking-tight">Rp {fmt(periodRevenue)}</p>
           </div>
           <div className="text-right">
-            <p className="text-[9px] text-white/25 uppercase tracking-widest">Rata-rata/Trx</p>
+            <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">Rata-rata/Trx</p>
             <p className="text-lg font-bold text-white/70 tabular-nums">Rp {fmt(periodAvg)}</p>
           </div>
           <PeriodTabs value={period} onChange={setPeriod} />
@@ -320,15 +320,15 @@ export default function Dashboard() {
       <div className="grid gap-4 lg:grid-cols-7">
 
         {/* Area chart */}
-        <div className="lg:col-span-5 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
+        <div className="lg:col-span-5 rounded-2xl border border-border/50 surface p-5">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h3 className="text-sm font-semibold text-white/80">
+              <h3 className="text-sm font-semibold text-foreground/80">
                 Grafik Penjualan · {period === "daily" ? "7 Hari" : period === "weekly" ? "4 Minggu" : "6 Bulan"} Terakhir
               </h3>
-              <p className="text-[10px] text-white/25 mt-0.5">Pendapatan dalam Rupiah</p>
+              <p className="text-[10px] text-muted-foreground/60 mt-0.5">Pendapatan dalam Rupiah</p>
             </div>
-            <span className="text-xs font-bold text-white/70 bg-white/[0.06] border border-white/[0.08] rounded-lg px-2.5 py-1 tabular-nums">
+            <span className="text-xs font-bold text-white/70 bg-accent/30 border border-white/[0.08] rounded-lg px-2.5 py-1 tabular-nums">
               Rp {fmt(chartTotal)}
             </span>
           </div>
@@ -366,7 +366,7 @@ export default function Dashboard() {
               <div key={d.label} className="flex flex-col items-center gap-1 flex-1">
                 <div className="h-0.5 w-6 rounded-full mx-auto"
                   style={{ background: d.sales > 0 ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.05)" }} />
-                <span className="text-[8px] text-white/20 tabular-nums text-center">
+                <span className="text-[8px] text-muted-foreground/40 tabular-nums text-center">
                   {d.sales > 0 ? fmtShort(d.sales) : "—"}
                 </span>
               </div>
@@ -375,14 +375,14 @@ export default function Dashboard() {
         </div>
 
         {/* Top Staff */}
-        <div className="lg:col-span-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 flex flex-col">
+        <div className="lg:col-span-2 rounded-2xl border border-border/50 surface p-5 flex flex-col">
           <div className="flex items-center gap-2 mb-5">
-            <User className="h-3.5 w-3.5 text-white/30" />
-            <h3 className="text-sm font-semibold text-white/80">Performa Kasir</h3>
+            <User className="h-3.5 w-3.5 text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-foreground/80">Performa Kasir</h3>
           </div>
           {topStaff.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-xs text-white/20">Belum ada data</p>
+              <p className="text-xs text-muted-foreground/40">Belum ada data</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -393,15 +393,15 @@ export default function Dashboard() {
                   <div key={s.name} className="space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[9px] font-mono text-white/20 shrink-0 w-3">{i + 1}</span>
-                        <div className="h-5 w-5 rounded-md bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
+                        <span className="text-[9px] font-mono text-muted-foreground/40 shrink-0 w-3">{i + 1}</span>
+                        <div className="h-5 w-5 rounded-md bg-accent/30 border border-white/[0.08] flex items-center justify-center shrink-0">
                           <span className="text-[7px] font-bold text-white/50">{s.name.substring(0,2).toUpperCase()}</span>
                         </div>
                         <span className="text-[11px] font-semibold text-white/60 truncate">{s.name}</span>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-[10px] font-bold text-white/70 tabular-nums">{fmtShort(s.total)}</p>
-                        <p className="text-[8px] text-white/25">{s.count}×</p>
+                        <p className="text-[8px] text-muted-foreground/60">{s.count}×</p>
                       </div>
                     </div>
                     <div className="h-0.5 bg-white/[0.04] rounded-full overflow-hidden">
@@ -420,13 +420,13 @@ export default function Dashboard() {
       <div className="grid gap-4 lg:grid-cols-2">
 
         {/* Recent in period */}
-        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] overflow-hidden">
-          <div className="px-5 pt-5 pb-4 border-b border-white/[0.06] flex items-center justify-between">
+        <div className="rounded-2xl border border-border/50 surface overflow-hidden">
+          <div className="px-5 pt-5 pb-4 border-b border-border/40 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-white/80">Transaksi Terbaru</h3>
-              <p className="text-[10px] text-white/25 mt-0.5">5 pesanan terakhir</p>
+              <h3 className="text-sm font-semibold text-foreground/80">Transaksi Terbaru</h3>
+              <p className="text-[10px] text-muted-foreground/60 mt-0.5">5 pesanan terakhir</p>
             </div>
-            <a href="/dashboard/transactions" className="text-[10px] text-white/25 hover:text-white/60 transition-colors border border-white/[0.06] rounded-lg px-2.5 py-1">
+            <a href="/dashboard/transactions" className="text-[10px] text-muted-foreground/60 hover:text-white/60 transition-colors border border-border/40 rounded-lg px-2.5 py-1">
               Lihat semua →
             </a>
           </div>
@@ -434,15 +434,15 @@ export default function Dashboard() {
             {recentTrx.length === 0 ? (
               <div className="flex flex-col items-center py-10 gap-2">
                 <IceCream className="h-6 w-6 text-white/10" />
-                <p className="text-xs text-white/20">Belum ada transaksi</p>
+                <p className="text-xs text-muted-foreground/40">Belum ada transaksi</p>
               </div>
             ) : recentTrx.map(trx => (
               <div key={trx.id} className="flex items-center gap-3 px-2.5 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors group cursor-default">
                 {/* Method icon */}
                 <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 border text-[9px] font-bold ${
                   trx.payment_method === "qris"
-                    ? "border-white/15 bg-white/[0.06] text-white/60"
-                    : "border-white/[0.06] bg-white/[0.02] text-white/30"
+                    ? "border-white/15 bg-accent/30 text-white/60"
+                    : "border-border/40 bg-white/[0.02] text-muted-foreground"
                 }`}>
                   {trx.payment_method === "qris" ? "QR" : "Rp"}
                 </div>
@@ -453,7 +453,7 @@ export default function Dashboard() {
                       {trx.profiles?.name || "—"}
                     </span>
                     <span className="text-[8px] text-white/15">·</span>
-                    <span className="text-[9px] text-white/20">{timeAgo(trx.created_at)}</span>
+                    <span className="text-[9px] text-muted-foreground/40">{timeAgo(trx.created_at)}</span>
                   </div>
                   <p className="text-[10px] text-white/50 truncate group-hover:text-white/75 transition-colors">
                     {trx.transaction_items.map(ti => `${ti.quantity}× ${ti.products?.name}`).join(", ")}
@@ -468,20 +468,20 @@ export default function Dashboard() {
         </div>
 
         {/* Top Products in period */}
-        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 flex flex-col">
+        <div className="rounded-2xl border border-border/50 surface p-5 flex flex-col">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-sm font-semibold text-white/80">Produk Terlaris</h3>
-              <p className="text-[10px] text-white/25 mt-0.5">{periodLabel}</p>
+              <h3 className="text-sm font-semibold text-foreground/80">Produk Terlaris</h3>
+              <p className="text-[10px] text-muted-foreground/60 mt-0.5">{periodLabel}</p>
             </div>
-            <span className="text-[9px] text-white/20 border border-white/[0.06] rounded-lg px-2 py-0.5">
+            <span className="text-[9px] text-muted-foreground/40 border border-border/40 rounded-lg px-2 py-0.5">
               {topProducts.reduce((s, p) => s + p.qty, 0)} item
             </span>
           </div>
           {topProducts.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 py-10">
               <IceCream className="h-6 w-6 text-white/10" />
-              <p className="text-xs text-white/20">Tidak ada data untuk periode ini</p>
+              <p className="text-xs text-muted-foreground/40">Tidak ada data untuk periode ini</p>
             </div>
           ) : (
             <div className="space-y-4 flex-1">
@@ -492,7 +492,7 @@ export default function Dashboard() {
                   <div key={p.name} className="space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-[9px] font-mono text-white/20 w-3 shrink-0">{i + 1}</span>
+                        <span className="text-[9px] font-mono text-muted-foreground/40 w-3 shrink-0">{i + 1}</span>
                         <span className="text-xs text-white/60 truncate">{p.name}</span>
                       </div>
                       <span className="text-[10px] font-bold text-white/70 tabular-nums shrink-0">{p.qty} pcs</span>

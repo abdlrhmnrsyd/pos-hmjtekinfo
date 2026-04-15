@@ -30,7 +30,7 @@ const fmt = (n: number) => n.toLocaleString("id-ID");
 const fmtShort = (n: number) =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}Jt` : n >= 1_000 ? `${(n / 1_000).toFixed(0)}K` : `${n}`;
 
-const surface = "rounded-2xl border border-white/[0.07] bg-white/[0.02]";
+const surface = "rounded-2xl border border-border/50 bg-card/50";
 
 /* ─── Badge ─── */
 function RoleBadge({ role }: { role: string }) {
@@ -40,7 +40,7 @@ function RoleBadge({ role }: { role: string }) {
       className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold border uppercase tracking-widest ${
         isAdmin
           ? "border-white/20 bg-white/[0.08] text-white/70"
-          : "border-white/[0.05] bg-transparent text-white/25"
+          : "border-white/[0.05] bg-transparent text-muted-foreground/60"
       }`}
     >
       {isAdmin ? "Admin" : role === "staff" ? "Kasir" : "User"}
@@ -58,7 +58,7 @@ function SortHeader({
   return (
     <button
       onClick={() => onClick(sortKey)}
-      className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest text-white/25 hover:text-white/60 transition-colors group"
+      className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 hover:text-white/60 transition-colors group"
     >
       {label}
       <span className={`transition-opacity ${active ? "opacity-100" : "opacity-0 group-hover:opacity-40"}`}>
@@ -192,7 +192,7 @@ export default function UsersPage() {
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-lg font-bold text-white/90 tracking-tight">Daftar Pengguna</h2>
-          <p className="text-xs text-white/25 mt-0.5">Semua akun terdaftar beserta riwayat transaksinya.</p>
+          <p className="text-xs text-muted-foreground/60 mt-0.5">Semua akun terdaftar beserta riwayat transaksinya.</p>
         </div>
 
         {/* Summary pills */}
@@ -203,7 +203,7 @@ export default function UsersPage() {
             { label: `Rp ${fmtShort(totalRevenue)}`, icon: Coins  },
           ].map(({ label, icon: Icon }) => (
             <span key={label} className="h-7 px-3 rounded-xl border border-white/[0.07] bg-white/[0.02] text-[10px] text-white/50 font-semibold flex items-center gap-1.5">
-              <Icon className="h-3 w-3 text-white/30" />
+              <Icon className="h-3 w-3 text-muted-foreground" />
               {label}
             </span>
           ))}
@@ -220,13 +220,13 @@ export default function UsersPage() {
         ].map(({ title, value, icon: Icon, sub }) => (
           <div key={title} className="group rounded-2xl border border-white/[0.07] bg-white/[0.025] hover:bg-white/[0.04] hover:border-white/[0.12] transition-all p-5">
             <div className="flex items-start justify-between mb-4">
-              <span className="text-[9px] font-semibold text-white/30 uppercase tracking-[0.15em]">{title}</span>
-              <div className="h-7 w-7 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center group-hover:bg-white/[0.08] transition-all">
+              <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-[0.15em]">{title}</span>
+              <div className="h-7 w-7 rounded-xl bg-white/[0.04] border border-border/40 flex items-center justify-center group-hover:bg-white/[0.08] transition-all">
                 <Icon className="h-3.5 w-3.5 text-white/35 group-hover:text-white/70 transition-colors" />
               </div>
             </div>
             <p className="text-[1.6rem] font-bold text-white tracking-tight leading-none mb-2">{value}</p>
-            <p className="text-[10px] text-white/25">{sub}</p>
+            <p className="text-[10px] text-muted-foreground/60">{sub}</p>
           </div>
         ))}
       </div>
@@ -235,15 +235,15 @@ export default function UsersPage() {
       <div className="flex items-center gap-3 flex-wrap">
         {/* Search */}
         <div className="relative group flex-1 min-w-[200px] max-w-[320px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-white/20 group-focus-within:text-white/50 transition-colors pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40 group-focus-within:text-white/50 transition-colors pointer-events-none" />
           <input
             placeholder="Cari nama, ID pengguna..."
-            className="w-full h-9 pl-8 pr-8 bg-white/[0.03] border border-white/[0.07] rounded-xl text-xs text-white/70 placeholder:text-white/20 outline-none focus:border-white/20 transition-all"
+            className="w-full h-9 pl-8 pr-8 bg-white/[0.03] border border-white/[0.07] rounded-xl text-xs text-white/70 placeholder:text-muted-foreground/40 outline-none focus:border-white/20 transition-all"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
           {search && (
-            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/60 transition-colors">
+            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-white/60 transition-colors">
               <X className="h-3 w-3" />
             </button>
           )}
@@ -267,12 +267,12 @@ export default function UsersPage() {
 
       {/* ── Table ── */}
       <div className={surface}>
-        <div className="p-5 border-b border-white/[0.06] flex items-center justify-between">
+        <div className="p-5 border-b border-border/40 flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-white/80">Semua Pengguna</p>
-            <p className="text-[10px] text-white/25 mt-0.5">Klik header kolom untuk mengurutkan.</p>
+            <p className="text-sm font-semibold text-foreground/80">Semua Pengguna</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-0.5">Klik header kolom untuk mengurutkan.</p>
           </div>
-          <p className="text-[10px] text-white/20 font-mono">{filtered.length} pengguna</p>
+          <p className="text-[10px] text-muted-foreground/40 font-mono">{filtered.length} pengguna</p>
         </div>
 
         <Table>
@@ -282,7 +282,7 @@ export default function UsersPage() {
                 <SortHeader label="Nama" sortKey="name" current={sortKey} dir={sortDir} onClick={handleSort} />
               </TableHead>
               <TableHead className="h-10">
-                <span className="text-[9px] font-semibold uppercase tracking-widest text-white/25">Role</span>
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60">Role</span>
               </TableHead>
               <TableHead className="h-10">
                 <SortHeader label="Transaksi" sortKey="trxCount" current={sortKey} dir={sortDir} onClick={handleSort} />
@@ -291,7 +291,7 @@ export default function UsersPage() {
                 <SortHeader label="Total Revenue" sortKey="trxTotal" current={sortKey} dir={sortDir} onClick={handleSort} />
               </TableHead>
               <TableHead className="h-10">
-                <span className="text-[9px] font-semibold uppercase tracking-widest text-white/25">QRIS / Tunai</span>
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60">QRIS / Tunai</span>
               </TableHead>
               <TableHead className="h-10 pr-5">
                 <SortHeader label="Terakhir Aktif" sortKey="lastTrx" current={sortKey} dir={sortDir} onClick={handleSort} />
@@ -305,7 +305,7 @@ export default function UsersPage() {
                 <TableCell colSpan={6} className="text-center h-40">
                   <div className="flex items-center justify-center gap-2">
                     <div className="h-3.5 w-3.5 border border-white/20 border-t-white/70 rounded-full animate-spin" />
-                    <span className="text-xs text-white/30">Memuat data pengguna...</span>
+                    <span className="text-xs text-muted-foreground">Memuat data pengguna...</span>
                   </div>
                 </TableCell>
               </TableRow>
@@ -314,7 +314,7 @@ export default function UsersPage() {
                 <TableCell colSpan={6} className="text-center h-40">
                   <div className="flex flex-col items-center gap-2">
                     <Users className="h-6 w-6 text-white/10" />
-                    <p className="text-xs text-white/20">Tidak ada pengguna ditemukan.</p>
+                    <p className="text-xs text-muted-foreground/40">Tidak ada pengguna ditemukan.</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -336,7 +336,7 @@ export default function UsersPage() {
                         <p className="text-[12px] font-semibold text-white/70 group-hover:text-white/90 transition-colors leading-tight">
                           {user.name}
                         </p>
-                        <p className="text-[9px] font-mono text-white/20 mt-0.5">
+                        <p className="text-[9px] font-mono text-muted-foreground/40 mt-0.5">
                           {user.id.substring(0, 12)}…
                         </p>
                       </div>
@@ -352,8 +352,8 @@ export default function UsersPage() {
                   <TableCell>
                     <div className="space-y-1.5 min-w-[100px]">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm font-bold text-white/80 tabular-nums">{user.trxCount}</span>
-                        <span className="text-[9px] text-white/25">transaksi</span>
+                        <span className="text-sm font-bold text-foreground/80 tabular-nums">{user.trxCount}</span>
+                        <span className="text-[9px] text-muted-foreground/60">transaksi</span>
                       </div>
                       <div className="h-0.5 bg-white/[0.04] rounded-full overflow-hidden w-[90px]">
                         <div
@@ -374,7 +374,7 @@ export default function UsersPage() {
                   {/* Revenue */}
                   <TableCell>
                     <div className="space-y-1.5 min-w-[110px]">
-                      <p className="text-sm font-bold text-white/80 tabular-nums">
+                      <p className="text-sm font-bold text-foreground/80 tabular-nums">
                         {user.trxTotal > 0 ? `Rp ${fmtShort(user.trxTotal)}` : "—"}
                       </p>
                       {user.trxTotal > 0 && (
@@ -398,7 +398,7 @@ export default function UsersPage() {
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold border border-white/15 bg-white/[0.05] text-white/60">
                           <CreditCard className="h-2.5 w-2.5" /> {user.qrisCount}
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold border border-white/[0.05] text-white/25">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold border border-white/[0.05] text-muted-foreground/60">
                           <Banknote className="h-2.5 w-2.5" /> {user.cashCount}
                         </span>
                       </div>
@@ -414,7 +414,7 @@ export default function UsersPage() {
                         <p className="text-[10px] font-semibold text-white/50 whitespace-nowrap">
                           {timeAgo(user.lastTrx)}
                         </p>
-                        <p className="text-[9px] text-white/20 mt-0.5 whitespace-nowrap">
+                        <p className="text-[9px] text-muted-foreground/40 mt-0.5 whitespace-nowrap">
                           {formatDate(user.lastTrx)}
                         </p>
                       </div>
@@ -430,13 +430,13 @@ export default function UsersPage() {
 
         {/* Footer */}
         {!loading && filtered.length > 0 && (
-          <div className="px-5 py-3 border-t border-white/[0.06] flex items-center justify-between flex-wrap gap-2">
-            <span className="text-[10px] text-white/25">{filtered.length} pengguna ditampilkan</span>
+          <div className="px-5 py-3 border-t border-border/40 flex items-center justify-between flex-wrap gap-2">
+            <span className="text-[10px] text-muted-foreground/60">{filtered.length} pengguna ditampilkan</span>
             <div className="flex items-center gap-4">
-              <span className="text-[10px] text-white/25">
+              <span className="text-[10px] text-muted-foreground/60">
                 Total: <span className="font-bold text-white/50">{totalTrx} transaksi</span>
               </span>
-              <span className="text-[10px] text-white/25">
+              <span className="text-[10px] text-muted-foreground/60">
                 Revenue: <span className="font-bold text-white/50 tabular-nums">Rp {fmt(totalRevenue)}</span>
               </span>
             </div>

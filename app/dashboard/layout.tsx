@@ -10,6 +10,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { AdminGuard } from "./_guard";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function DashboardLayout({
   children,
@@ -20,25 +21,25 @@ export default function DashboardLayout({
     <AdminGuard>
     <SidebarProvider>
       <AppSidebar />
-      <main className="flex-1 overflow-x-hidden w-full flex flex-col bg-[oklch(0.06_0_0)]">
+      <main className="flex-1 overflow-x-hidden w-full flex flex-col bg-background text-foreground">
         {/* Top bar */}
         <header
-          className="sticky top-0 z-50 flex h-14 shrink-0 items-center px-5 border-b border-white/[0.06]"
-          style={{ background: "rgba(6,6,6,0.90)", backdropFilter: "blur(20px)" }}
+          className="sticky top-0 z-50 flex h-14 shrink-0 items-center px-5 border-b border-border/50"
+          style={{ background: "var(--background)", backdropFilter: "blur(20px)" }}
         >
           <div className="flex items-center gap-3 flex-1">
-            <SidebarTrigger className="-ml-1 text-white/30 hover:text-white/70 hover:bg-white/[0.05] p-2 rounded-xl transition-all h-9 w-9" />
-            <Separator orientation="vertical" className="h-5 bg-white/[0.08] hidden sm:block" />
+            <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors p-2 rounded-xl transition-all h-9 w-9" />
+            <Separator orientation="vertical" className="h-5 bg-border/40 hidden sm:block" />
             <Breadcrumb className="hidden sm:flex">
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard" className="text-xs text-white/30 hover:text-white/65 transition-colors font-semibold">
+                  <BreadcrumbLink href="/dashboard" className="text-xs text-muted-foreground hover:text-foreground transition-colors font-semibold">
                     Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator className="text-white/15" />
+                <BreadcrumbSeparator className="text-muted-foreground/20" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-xs text-white/60 font-bold">
+                  <BreadcrumbPage className="text-xs text-foreground/60 font-bold">
                     Overview
                   </BreadcrumbPage>
                 </BreadcrumbItem>
@@ -48,7 +49,10 @@ export default function DashboardLayout({
           {/* Live indicator */}
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-white/40 animate-[dot-pulse_2s_ease-in-out_infinite]" />
-            <span className="text-[10px] text-white/20 uppercase tracking-widest hidden sm:block font-semibold">Live</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden sm:block font-semibold">Live</span>
+          </div>
+          <div className="flex items-center gap-2 ml-4">
+            <ThemeToggle />
           </div>
         </header>
 
@@ -57,7 +61,7 @@ export default function DashboardLayout({
           {/* Subtle ambient */}
           <div
             className="pointer-events-none absolute top-0 right-0 w-[500px] h-[400px] -translate-y-1/4 translate-x-1/4"
-            style={{ background: "radial-gradient(ellipse, rgba(255,255,255,0.025) 0%, transparent 70%)" }}
+            style={{ background: "radial-gradient(ellipse, var(--border) 0%, transparent 70%)", opacity: 0.05 }}
           />
           <div className="relative z-10 p-5 lg:p-7">
             {children}

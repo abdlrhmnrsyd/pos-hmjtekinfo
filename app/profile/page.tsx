@@ -9,6 +9,7 @@ import {
   KeyRound, Receipt, ArrowLeft, IceCream, CalendarDays,
 } from "lucide-react";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -271,18 +272,18 @@ export default function ProfilePage() {
 
   /* ── Loading screen ── */
   if (loading) return (
-    <div className="flex h-screen items-center justify-center bg-[oklch(0.06_0_0)]">
-      <div className="h-5 w-5 animate-spin rounded-full border border-white/20 border-t-white/80" />
+    <div className="flex h-screen items-center justify-center bg-background">
+      <div className="h-5 w-5 animate-spin rounded-full border border-border border-t-foreground" />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[oklch(0.06_0_0)]">
+    <div className="min-h-screen bg-background text-foreground">
 
       {/* ── Navbar ── */}
       <header
-        className="sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-white/[0.06]"
-        style={{ background: "rgba(6,6,6,0.90)", backdropFilter: "blur(20px)" }}
+        className="sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-border/50"
+        style={{ background: "var(--background)", backdropFilter: "blur(20px)" }}
       >
         {/* Back button */}
         <Link href={profile?.role === "admin" ? "/dashboard" : "/kasir"}
@@ -307,7 +308,9 @@ export default function ProfilePage() {
         </div>
 
         {/* Right: role badge */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <div className="flex items-center gap-2">
           <span
             className="h-7 px-3 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center border"
             style={{
@@ -318,6 +321,7 @@ export default function ProfilePage() {
           >
             {profile?.role || "user"}
           </span>
+          </div>
         </div>
       </header>
 
@@ -325,12 +329,11 @@ export default function ProfilePage() {
       <div className="max-w-5xl mx-auto px-5 py-8 space-y-7">
 
         {/* ── Profile Hero Card ── */}
-        <div className="rounded-2xl border border-white/[0.07] overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.025)" }}>
+        <div className="rounded-2xl border border-border/50 overflow-hidden bg-card/50 surface">
           {/* Top strip */}
-          <div className="h-20 w-full" style={{
-            background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)",
-            borderBottom: "1px solid rgba(255,255,255,0.05)",
+          <div className="h-20 w-full border-b border-border/40" style={{
+            background: "linear-gradient(135deg, var(--border) 0%, transparent 100%)",
+            opacity: 0.2
           }} />
           <div className="px-6 pb-6">
             {/* Avatar sits on the border */}

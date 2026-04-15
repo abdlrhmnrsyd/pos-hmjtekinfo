@@ -53,26 +53,25 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className="border-r border-white/[0.06] bg-[oklch(0.06_0_0)]"
-      style={{ boxShadow: "inset -1px 0 0 rgba(255,255,255,0.04)" }}
+      className="border-r border-border bg-sidebar"
     >
       {/* Logo */}
-      <SidebarHeader className="px-4 py-5 border-b border-white/[0.06]">
+      <SidebarHeader className="px-4 py-5 border-b border-border/50">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl overflow-hidden shrink-0 border border-white/[0.10]">
+          <div className="h-9 w-9 rounded-xl overflow-hidden shrink-0 border border-border/50">
             <img src="/logo.jpg" alt="ICE HMJ Logo" className="w-full h-full object-cover" />
           </div>
           <div>
-            <p className="text-sm font-bold text-white tracking-tight leading-none">ICE HMJ</p>
-            <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mt-0.5">Tekinfo</p>
+            <p className="text-sm font-bold text-foreground tracking-tight leading-none">ICE HMJ</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-0.5">Tekinfo</p>
           </div>
         </div>
       </SidebarHeader>
 
       {/* Nav */}
-      <SidebarContent className="px-2 py-4 bg-[oklch(0.06_0_0)] flex-1">
+      <SidebarContent className="px-2 py-4 bg-sidebar flex-1">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[9px] font-bold uppercase tracking-[0.20em] text-white/20 mb-2 px-2">
+          <SidebarGroupLabel className="text-[9px] font-bold uppercase tracking-[0.20em] text-muted-foreground px-2">
             Menu Utama
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -85,12 +84,12 @@ export function AppSidebar() {
                       isActive={isActive}
                       className={`h-10 rounded-xl transition-all duration-150 ${
                         isActive
-                          ? "bg-white text-black font-bold"
-                          : "text-white/40 hover:text-white/80 hover:bg-white/[0.05] font-medium"
+                          ? "bg-primary text-primary-foreground font-bold shadow-lg"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent font-medium"
                       }`}
                       render={
                         <a href={item.url} className="flex items-center gap-3 px-3 w-full">
-                          <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? "text-black" : "text-white/35"}`} />
+                          <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? "text-black" : "text-muted-foreground/50"}`} />
                           <span className="text-[13px]">{item.title}</span>
                         </a>
                       }
@@ -104,23 +103,22 @@ export function AppSidebar() {
       </SidebarContent>
 
       {/* User footer */}
-      <SidebarFooter className="border-t border-white/[0.06] p-3">
+      <SidebarFooter className="border-t border-border/40 p-3">
         <div
-          className="flex items-center justify-between w-full rounded-xl px-3 py-2.5"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+          className="flex items-center justify-between w-full rounded-xl px-3 py-2.5 surface"
         >
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="h-8 w-8 rounded-xl bg-white/[0.07] flex items-center justify-center shrink-0 border border-white/[0.10]">
-              <span className="text-xs font-bold text-white/60">{userName.substring(0, 2).toUpperCase()}</span>
+            <div className="h-8 w-8 rounded-xl bg-accent/50 flex items-center justify-center shrink-0 border border-border/50">
+              <span className="text-xs font-bold text-muted-foreground/70">{userName.substring(0, 2).toUpperCase()}</span>
             </div>
             <div className="flex flex-col overflow-hidden min-w-0">
-              <span className="text-[13px] font-semibold text-white/75 truncate leading-tight">{userName}</span>
-              <span className="text-[10px] text-white/25 truncate leading-tight">{userEmail}</span>
+              <span className="text-[13px] font-semibold text-foreground/75 truncate leading-tight">{userName}</span>
+              <span className="text-[10px] text-muted-foreground/40 truncate leading-tight">{userEmail}</span>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="text-white/25 hover:text-white/70 p-1.5 rounded-lg transition-colors hover:bg-white/[0.06] shrink-0"
+            className="text-muted-foreground/40 hover:text-white/70 p-1.5 rounded-lg transition-colors hover:bg-white/[0.06] shrink-0"
             title="Keluar"
           >
             <LogOut className="h-4 w-4" />

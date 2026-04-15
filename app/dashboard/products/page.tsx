@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 
 interface Product { id: string; name: string; price: number; image_url: string; is_active: boolean; }
 
-const surface = "rounded-2xl border border-white/[0.07] bg-white/[0.02]";
-const inputCls = "w-full h-10 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-white/25 focus:bg-white/[0.05] transition-all";
+const surface = "rounded-2xl border border-border/50 bg-card/50";
+const inputCls = "w-full h-10 bg-background/50 border border-border/50 rounded-xl px-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-border transition-all";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -84,7 +84,7 @@ export default function ProductsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-white/90 tracking-tight">Katalog Produk</h2>
-          <p className="text-xs text-white/25 mt-0.5">Kelola produk yang tersedia di sistem kasir.</p>
+          <p className="text-xs text-muted-foreground/60 mt-0.5">Kelola produk yang tersedia di sistem kasir.</p>
         </div>
         <button onClick={handleOpenCreate}
           className="flex items-center gap-2 h-9 px-4 rounded-xl bg-white text-black text-xs font-semibold hover:bg-white/90 transition-all w-fit">
@@ -94,18 +94,18 @@ export default function ProductsPage() {
 
       {/* Table card */}
       <div className={surface}>
-        <div className="p-5 border-b border-white/[0.06]">
-          <p className="text-sm font-semibold text-white/80">Daftar Produk</p>
-          <p className="text-[10px] text-white/25 mt-0.5">Semua produk yang tersedia di sistem kasir.</p>
+        <div className="p-5 border-b border-border/40">
+          <p className="text-sm font-semibold text-foreground/80">Daftar Produk</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5">Semua produk yang tersedia di sistem kasir.</p>
         </div>
         <Table>
           <TableHeader>
             <TableRow className="border-white/[0.05] hover:bg-transparent">
-              <TableHead className="h-10 px-5 text-[9px] font-semibold text-white/25 uppercase tracking-widest w-[60px]">Foto</TableHead>
-              <TableHead className="h-10 text-[9px] font-semibold text-white/25 uppercase tracking-widest">Nama</TableHead>
-              <TableHead className="h-10 text-[9px] font-semibold text-white/25 uppercase tracking-widest">Harga</TableHead>
-              <TableHead className="h-10 text-[9px] font-semibold text-white/25 uppercase tracking-widest">Status</TableHead>
-              <TableHead className="h-10 text-right px-5 text-[9px] font-semibold text-white/25 uppercase tracking-widest">Aksi</TableHead>
+              <TableHead className="h-10 px-5 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest w-[60px]">Foto</TableHead>
+              <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Nama</TableHead>
+              <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Harga</TableHead>
+              <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Status</TableHead>
+              <TableHead className="h-10 text-right px-5 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -114,7 +114,7 @@ export default function ProductsPage() {
                 <TableCell colSpan={5} className="text-center h-32">
                   <div className="flex items-center justify-center gap-2">
                     <div className="h-3.5 w-3.5 border border-white/20 border-t-white/70 rounded-full animate-spin" />
-                    <span className="text-xs text-white/30">Memuat...</span>
+                    <span className="text-xs text-muted-foreground">Memuat...</span>
                   </div>
                 </TableCell>
               </TableRow>
@@ -127,17 +127,17 @@ export default function ProductsPage() {
             ) : products.map(p => (
               <TableRow key={p.id} className="border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
                 <TableCell className="px-5 py-3">
-                  <div className="h-9 w-9 rounded-xl overflow-hidden border border-white/[0.06] bg-white/[0.02] group-hover:border-white/15 transition-all">
+                  <div className="h-9 w-9 rounded-xl overflow-hidden border border-border/40 bg-white/[0.02] group-hover:border-white/15 transition-all">
                     {p.image_url ? <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
                       : <div className="h-full w-full flex items-center justify-center text-sm">🍦</div>}
                   </div>
                 </TableCell>
                 <TableCell className="text-sm font-medium text-white/70">{p.name}</TableCell>
-                <TableCell className="text-sm font-semibold text-white/80">Rp {p.price.toLocaleString("id-ID")}</TableCell>
+                <TableCell className="text-sm font-semibold text-foreground/80">Rp {p.price.toLocaleString("id-ID")}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border ${
                     p.is_active ? "border-white/15 text-white/70 bg-white/[0.06]"
-                                : "border-white/[0.05] text-white/25 bg-transparent"
+                                : "border-white/[0.05] text-muted-foreground/60 bg-transparent"
                   }`}>
                     <span className={`h-1 w-1 rounded-full ${p.is_active ? "bg-white/60" : "bg-white/20"}`} />
                     {p.is_active ? "Aktif" : "Nonaktif"}
@@ -146,7 +146,7 @@ export default function ProductsPage() {
                 <TableCell className="text-right px-5">
                   <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
                     <button onClick={() => handleOpenEdit(p)}
-                      className="h-7 w-7 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/[0.05] flex items-center justify-center transition-colors">
+                      className="h-7 w-7 rounded-lg text-muted-foreground hover:text-white/70 hover:bg-white/[0.05] flex items-center justify-center transition-colors">
                       <Edit className="h-3 w-3" />
                     </button>
                     <button onClick={() => toggleStatus(p.id, p.is_active)} title={p.is_active ? "Nonaktifkan" : "Aktifkan"}
@@ -174,20 +174,20 @@ export default function ProductsPage() {
           <form onSubmit={handleSave} className="p-6 space-y-5">
             <DialogHeader>
               <DialogTitle className="text-sm font-bold text-white/90">{editingId ? "Edit Produk" : "Tambah Produk"}</DialogTitle>
-              <p className="text-[10px] text-white/30">{editingId ? "Ubah detail produk." : "Isi detail produk baru."}</p>
+              <p className="text-[10px] text-muted-foreground">{editingId ? "Ubah detail produk." : "Isi detail produk baru."}</p>
             </DialogHeader>
 
             <div className="space-y-3.5">
               <div className="space-y-1.5">
-                <label className="text-[9px] font-semibold text-white/30 uppercase tracking-wider">Nama Produk</label>
+                <label className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Nama Produk</label>
                 <input className={inputCls} required placeholder="Contoh: Vanilla Dream" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[9px] font-semibold text-white/30 uppercase tracking-wider">Harga (Rp)</label>
+                <label className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Harga (Rp)</label>
                 <input className={inputCls} type="number" required min={0} placeholder="15000" value={formData.price || ""} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[9px] font-semibold text-white/30 uppercase tracking-wider">Foto Produk</label>
+                <label className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Foto Produk</label>
                 <div className="flex gap-3 items-start">
                   <div className="h-16 w-16 rounded-xl overflow-hidden border border-white/[0.07] bg-white/[0.02] flex items-center justify-center shrink-0">
                     {(imagePreviewUrl || formData.image_url)
@@ -196,7 +196,7 @@ export default function ProductsPage() {
                   </div>
                   <div className="flex-1 space-y-2">
                     <Input type="file" accept="image/*"
-                      className="cursor-pointer file:text-[10px] file:font-medium file:text-white/50 file:bg-white/[0.05] file:border-0 hover:file:bg-white/[0.08] text-[10px] h-9 bg-transparent border border-white/[0.07] rounded-xl p-1.5 text-white/30"
+                      className="cursor-pointer file:text-[10px] file:font-medium file:text-white/50 file:bg-white/[0.05] file:border-0 hover:file:bg-white/[0.08] text-[10px] h-9 bg-transparent border border-white/[0.07] rounded-xl p-1.5 text-muted-foreground"
                       onChange={e => { const f = e.target.files?.[0]; if (f) { setImageFile(f); setImagePreviewUrl(URL.createObjectURL(f)); } }} />
                     <div className="flex items-center gap-2">
                       <div className="h-px bg-white/[0.05] flex-1" />
@@ -213,7 +213,7 @@ export default function ProductsPage() {
 
             <DialogFooter className="flex gap-2 pt-1">
               <button type="button" onClick={() => setIsOpen(false)}
-                className="h-9 px-4 rounded-xl text-xs font-medium text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-colors">
+                className="h-9 px-4 rounded-xl text-xs font-medium text-muted-foreground hover:text-white/60 hover:bg-white/[0.04] transition-colors">
                 Batal
               </button>
               <button type="submit" disabled={saving || uploadingImage}

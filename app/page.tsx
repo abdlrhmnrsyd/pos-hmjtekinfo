@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { IceCream, ArrowRight } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[oklch(0.06_0_0)] overflow-hidden">
+    <div className="relative flex min-h-screen items-center justify-center bg-background text-foreground overflow-hidden">
+      
+      <div className="absolute top-6 right-6 z-50">
+        <ThemeToggle />
+      </div>
 
       {/* Subtle ambient glow */}
       <div
@@ -29,15 +34,14 @@ export default function Home() {
 
         {/* Title */}
         <div className="text-center space-y-2">
-          <h1 className="text-xl font-bold text-white tracking-tight">ICE HMJ Tekinfo</h1>
-          <p className="text-sm text-white/30">Sistem Kasir & Dashboard</p>
+          <h1 className="text-xl font-bold text-foreground tracking-tight">ICE HMJ Tekinfo</h1>
+          <p className="text-sm text-muted-foreground">Sistem Kasir & Dashboard</p>
         </div>
 
         {/* CTA */}
         <Link href="/login">
           <button
-            className="flex items-center gap-2.5 h-12 px-7 rounded-2xl bg-white text-black text-sm font-bold hover:bg-white/90 transition-all group"
-            style={{ boxShadow: "0 4px 24px rgba(255,255,255,0.14)" }}
+            className="flex items-center gap-2.5 h-12 px-7 rounded-2xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-all shadow-xl group"
           >
             Mulai Aplikasi
             <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />

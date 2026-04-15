@@ -46,11 +46,11 @@ function ToastBanner({ toast, onDismiss }: { toast: Toast; onDismiss: () => void
       }}
     >
       {isOk
-        ? <CheckCircle2 className="h-4 w-4 text-white/70 shrink-0" />
+        ? <CheckCircle2 className="h-4 w-4 text-foreground/70 shrink-0" />
         : <XCircle className="h-4 w-4 text-red-400 shrink-0" />
       }
-      <span className="text-xs font-semibold text-white/75">{toast.msg}</span>
-      <button onClick={onDismiss} className="ml-2 text-white/25 hover:text-white/60 transition-colors text-xs">✕</button>
+      <span className="text-xs font-semibold text-foreground/75">{toast.msg}</span>
+      <button onClick={onDismiss} className="ml-2 text-muted-foreground/60 hover:text-white/60 transition-colors text-xs">✕</button>
     </div>
   );
 }
@@ -58,7 +58,7 @@ function ToastBanner({ toast, onDismiss }: { toast: Toast; onDismiss: () => void
 /* ─── Section Card ─── */
 function SectionCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-white/[0.07] bg-white/[0.025] ${className}`}>
+    <div className={`rounded-2xl border border-border/50 bg-card/50 surface ${className}`}>
       {children}
     </div>
   );
@@ -67,8 +67,8 @@ function SectionCard({ children, className = "" }: { children: React.ReactNode; 
 /* ─── Stat pill ─── */
 function StatPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3">
-      <span className="text-[9px] font-semibold text-white/25 uppercase tracking-widest">{label}</span>
+    <div className="flex flex-col gap-0.5 rounded-xl border border-border/50 bg-white/[0.03] px-4 py-3">
+      <span className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">{label}</span>
       <span className="text-base font-bold text-white/85 tabular-nums tracking-tight">{value}</span>
     </div>
   );
@@ -205,8 +205,8 @@ export default function ProfilePage() {
 
       {/* ── Page Header ── */}
       <div>
-        <h2 className="text-xl font-bold text-white/90 tracking-tight">Profil Saya</h2>
-        <p className="text-xs text-white/25 mt-0.5">Kelola informasi akun dan riwayat transaksi Anda.</p>
+        <h2 className="text-xl font-bold text-foreground/90 tracking-tight">Profil Saya</h2>
+        <p className="text-xs text-muted-foreground/60 mt-0.5">Kelola informasi akun dan riwayat transaksi Anda.</p>
       </div>
 
       {/* ── Profile Info Card ── */}
@@ -218,7 +218,7 @@ export default function ProfilePage() {
               className="h-20 w-20 rounded-2xl flex items-center justify-center border border-white/[0.12]"
               style={{ background: "rgba(255,255,255,0.06)" }}
             >
-              <span className="text-2xl font-bold text-white/70">{initials}</span>
+              <span className="text-2xl font-bold text-foreground/70">{initials}</span>
             </div>
             <span
               className="absolute -bottom-1 -right-1 h-5 px-2 rounded-full text-[8px] font-bold uppercase tracking-wide flex items-center border"
@@ -234,9 +234,9 @@ export default function ProfilePage() {
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold text-white/90 tracking-tight">{displayName}</h3>
-            <p className="text-xs text-white/35 mt-0.5">{email}</p>
-            <p className="text-[10px] text-white/20 mt-1.5 flex items-center gap-1">
+            <h3 className="text-xl font-bold text-foreground/90 tracking-tight">{displayName}</h3>
+            <p className="text-xs text-muted-foreground/80 mt-0.5">{email}</p>
+            <p className="text-[10px] text-muted-foreground/40 mt-1.5 flex items-center gap-1">
               <User className="h-3 w-3" />
               Bergabung sejak {joinedDate}
             </p>
@@ -252,24 +252,24 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats bar */}
-        <div className="border-t border-white/[0.06] px-6 py-4 flex items-center gap-6 flex-wrap">
+        <div className="border-t border-border/40 px-6 py-4 flex items-center gap-6 flex-wrap">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="h-3.5 w-3.5 text-white/25" />
+            <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground/60" />
             <span className="text-[11px] text-white/40">{transactions.length} transaksi total</span>
           </div>
           <div className="h-3 w-px bg-white/[0.08]" />
           <div className="flex items-center gap-2">
-            <CreditCard className="h-3.5 w-3.5 text-white/25" />
+            <CreditCard className="h-3.5 w-3.5 text-muted-foreground/60" />
             <span className="text-[11px] text-white/40">{totalQris}× QRIS</span>
           </div>
           <div className="h-3 w-px bg-white/[0.08]" />
           <div className="flex items-center gap-2">
-            <Banknote className="h-3.5 w-3.5 text-white/25" />
+            <Banknote className="h-3.5 w-3.5 text-muted-foreground/60" />
             <span className="text-[11px] text-white/40">{totalCash}× Tunai</span>
           </div>
           <div className="h-3 w-px bg-white/[0.08]" />
           <div className="flex items-center gap-2">
-            <Coins className="h-3.5 w-3.5 text-white/25" />
+            <Coins className="h-3.5 w-3.5 text-muted-foreground/60" />
             <span className="text-[11px] text-white/40">Rp {fmt(totalRevenue)} total pendapatan</span>
           </div>
         </div>
@@ -282,15 +282,15 @@ export default function ProfilePage() {
         <div className="lg:col-span-3 space-y-0">
           <SectionCard className="overflow-hidden">
             {/* Header */}
-            <div className="px-5 pt-5 pb-4 border-b border-white/[0.06] flex items-center justify-between">
+            <div className="px-5 pt-5 pb-4 border-b border-border/40 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Receipt className="h-3.5 w-3.5 text-white/30" />
+                <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
                 <div>
-                  <h3 className="text-sm font-semibold text-white/80">Riwayat Transaksi Saya</h3>
-                  <p className="text-[10px] text-white/25 mt-0.5">Semua transaksi yang Anda lakukan</p>
+                  <h3 className="text-sm font-semibold text-foreground/80">Riwayat Transaksi Saya</h3>
+                  <p className="text-[10px] text-muted-foreground/60 mt-0.5">Semua transaksi yang Anda lakukan</p>
                 </div>
               </div>
-              <span className="text-[10px] font-mono text-white/20 bg-white/[0.03] border border-white/[0.06] rounded-lg px-2.5 py-1">
+              <span className="text-[10px] font-mono text-muted-foreground/40 bg-white/[0.03] border border-border/40 rounded-lg px-2.5 py-1">
                 {transactions.length} total
               </span>
             </div>
@@ -300,10 +300,10 @@ export default function ProfilePage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/[0.05] hover:bg-transparent sticky top-0">
-                    <TableHead className="h-9 px-4 text-[9px] font-semibold text-white/20 uppercase tracking-widest bg-white/[0.02]">Waktu</TableHead>
-                    <TableHead className="h-9 text-[9px] font-semibold text-white/20 uppercase tracking-widest bg-white/[0.02]">Pesanan</TableHead>
-                    <TableHead className="h-9 text-[9px] font-semibold text-white/20 uppercase tracking-widest bg-white/[0.02]">Bayar</TableHead>
-                    <TableHead className="h-9 text-right px-4 text-[9px] font-semibold text-white/20 uppercase tracking-widest bg-white/[0.02]">Total</TableHead>
+                    <TableHead className="h-9 px-4 text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-widest bg-white/[0.02]">Waktu</TableHead>
+                    <TableHead className="h-9 text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-widest bg-white/[0.02]">Pesanan</TableHead>
+                    <TableHead className="h-9 text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-widest bg-white/[0.02]">Bayar</TableHead>
+                    <TableHead className="h-9 text-right px-4 text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-widest bg-white/[0.02]">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -312,7 +312,7 @@ export default function ProfilePage() {
                       <TableCell colSpan={4} className="text-center h-32">
                         <div className="flex items-center justify-center gap-2">
                           <div className="h-3.5 w-3.5 border border-white/20 border-t-white/70 rounded-full animate-spin" />
-                          <span className="text-xs text-white/30">Memuat...</span>
+                          <span className="text-xs text-muted-foreground">Memuat...</span>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -321,14 +321,14 @@ export default function ProfilePage() {
                       <TableCell colSpan={4} className="text-center h-32">
                         <div className="flex flex-col items-center gap-2">
                           <ShoppingBag className="h-6 w-6 text-white/10" />
-                          <p className="text-xs text-white/20">Belum ada transaksi</p>
+                          <p className="text-xs text-muted-foreground/40">Belum ada transaksi</p>
                         </div>
                       </TableCell>
                     </TableRow>
                   ) : transactions.map(trx => (
                     <TableRow key={trx.id} className="border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
                       {/* Waktu */}
-                      <TableCell className="px-4 py-3 text-[10px] text-white/35 whitespace-nowrap align-top">
+                      <TableCell className="px-4 py-3 text-[10px] text-muted-foreground/80 whitespace-nowrap align-top">
                         {formatDate(trx.created_at)}
                       </TableCell>
 
@@ -348,7 +348,7 @@ export default function ProfilePage() {
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold border uppercase tracking-wide ${
                           trx.payment_method === "qris"
                             ? "border-white/15 text-white/60 bg-white/[0.05]"
-                            : "border-white/[0.05] text-white/25 bg-transparent"
+                            : "border-white/[0.05] text-muted-foreground/60 bg-transparent"
                         }`}>
                           {trx.payment_method === "qris"
                             ? <><CreditCard className="h-2.5 w-2.5" /> QRIS</>
@@ -358,7 +358,7 @@ export default function ProfilePage() {
 
                       {/* Total */}
                       <TableCell className="text-right px-4 py-3 align-top">
-                        <span className="text-xs font-bold text-white/75 tabular-nums">
+                        <span className="text-xs font-bold text-foreground/75 tabular-nums">
                           Rp {fmt(trx.total_amount)}
                         </span>
                       </TableCell>
@@ -370,8 +370,8 @@ export default function ProfilePage() {
 
             {/* Footer */}
             {transactions.length > 0 && !trxLoading && (
-              <div className="px-5 py-3 border-t border-white/[0.06] flex items-center justify-between">
-                <span className="text-[10px] text-white/20">{transactions.length} transaksi</span>
+              <div className="px-5 py-3 border-t border-border/40 flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground/40">{transactions.length} transaksi</span>
                 <span className="text-[11px] font-bold text-white/55 tabular-nums">
                   Total: Rp {fmt(totalRevenue)}
                 </span>
@@ -384,11 +384,11 @@ export default function ProfilePage() {
         <div className="lg:col-span-2">
           <SectionCard>
             {/* Header */}
-            <div className="px-5 pt-5 pb-4 border-b border-white/[0.06] flex items-center gap-2">
-              <KeyRound className="h-3.5 w-3.5 text-white/30" />
+            <div className="px-5 pt-5 pb-4 border-b border-border/40 flex items-center gap-2">
+              <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
               <div>
-                <h3 className="text-sm font-semibold text-white/80">Ganti Password</h3>
-                <p className="text-[10px] text-white/25 mt-0.5">Perbarui kata sandi akun Anda</p>
+                <h3 className="text-sm font-semibold text-foreground/80">Ganti Password</h3>
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5">Perbarui kata sandi akun Anda</p>
               </div>
             </div>
 
@@ -396,23 +396,23 @@ export default function ProfilePage() {
 
               {/* Current Password */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-white/35 uppercase tracking-widest">
+                <label className="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-widest">
                   Password Saat Ini
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20 pointer-events-none" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40 pointer-events-none" />
                   <input
                     type={showCurrent ? "text" : "password"}
                     value={currentPwd}
                     onChange={e => setCurrentPwd(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full h-10 pl-9 pr-10 bg-white/[0.03] border border-white/[0.07] rounded-xl text-xs text-white/70 placeholder:text-white/20 outline-none focus:border-white/20 transition-all"
+                    className="w-full h-10 pl-9 pr-10 bg-white/[0.03] border border-border/50 rounded-xl text-xs text-foreground/70 placeholder:text-muted-foreground/40 outline-none focus:border-white/20 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrent(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/55 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-white/55 transition-colors"
                   >
                     {showCurrent ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   </button>
@@ -421,23 +421,23 @@ export default function ProfilePage() {
 
               {/* New Password */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-white/35 uppercase tracking-widest">
+                <label className="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-widest">
                   Password Baru
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20 pointer-events-none" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40 pointer-events-none" />
                   <input
                     type={showNew ? "text" : "password"}
                     value={newPwd}
                     onChange={e => setNewPwd(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full h-10 pl-9 pr-10 bg-white/[0.03] border border-white/[0.07] rounded-xl text-xs text-white/70 placeholder:text-white/20 outline-none focus:border-white/20 transition-all"
+                    className="w-full h-10 pl-9 pr-10 bg-white/[0.03] border border-border/50 rounded-xl text-xs text-foreground/70 placeholder:text-muted-foreground/40 outline-none focus:border-white/20 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNew(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/55 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-white/55 transition-colors"
                   >
                     {showNew ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   </button>
@@ -459,23 +459,23 @@ export default function ProfilePage() {
 
               {/* Confirm Password */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-white/35 uppercase tracking-widest">
+                <label className="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-widest">
                   Konfirmasi Password Baru
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20 pointer-events-none" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40 pointer-events-none" />
                   <input
                     type={showConfirm ? "text" : "password"}
                     value={confirmPwd}
                     onChange={e => setConfirmPwd(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full h-10 pl-9 pr-10 bg-white/[0.03] border border-white/[0.07] rounded-xl text-xs text-white/70 placeholder:text-white/20 outline-none focus:border-white/20 transition-all"
+                    className="w-full h-10 pl-9 pr-10 bg-white/[0.03] border border-border/50 rounded-xl text-xs text-foreground/70 placeholder:text-muted-foreground/40 outline-none focus:border-white/20 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirm(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/55 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-white/55 transition-colors"
                   >
                     {showConfirm ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   </button>
@@ -493,9 +493,9 @@ export default function ProfilePage() {
               </div>
 
               {/* Note */}
-              <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-3 flex items-start gap-2">
-                <AlertCircle className="h-3.5 w-3.5 text-white/20 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-white/30 leading-relaxed">
+              <div className="rounded-xl bg-white/[0.02] border border-border/40 p-3 flex items-start gap-2">
+                <AlertCircle className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 mt-0.5" />
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
                   Setelah berhasil mengganti password, Anda tidak akan keluar dari sesi ini secara otomatis.
                 </p>
               </div>
