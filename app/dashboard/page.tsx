@@ -27,19 +27,19 @@ const fmt      = (n: number) => n.toLocaleString("id-ID");
 const fmtShort = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}Jt` : n >= 1_000 ? `${(n / 1_000).toFixed(0)}K` : `${n}`;
 
 /* ─── Stat Card ─── */
-function StatCard({ title, value, sub, icon: Icon }: {
-  title: string; value: string; sub: string; icon: React.ElementType;
+function StatCard({ title, value, sub, icon: Icon, className }: {
+  title: string; value: string; sub: string; icon: React.ElementType; className?: string;
 }) {
   return (
-    <div className="group rounded-2xl border border-border/50 bg-card/50 hover:bg-accent/5 transition-all duration-300 p-5">
+    <div className={`group rounded-2xl border transition-all duration-300 p-5 ${className || "border-border/50 bg-card/50 hover:bg-accent/5"}`}>
       <div className="flex items-start justify-between mb-4">
-        <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-[0.15em]">{title}</span>
-        <div className="h-7 w-7 rounded-xl bg-foreground/[0.04] border border-border/40 flex items-center justify-center group-hover:bg-foreground/[0.08] transition-all">
-          <Icon className="h-3.5 w-3.5 text-foreground/35 group-hover:text-foreground/70 transition-colors" />
+        <span className={`text-[9px] font-bold uppercase tracking-[0.20em] ${className ? "text-white/70" : "text-muted-foreground"}`}>{title}</span>
+        <div className={`h-7 w-7 rounded-xl flex items-center justify-center transition-all ${className ? "bg-white/20 border-white/20" : "bg-foreground/[0.04] border border-border/40 group-hover:bg-foreground/[0.08]"}`}>
+          <Icon className={`h-3.5 w-3.5 ${className ? "text-white" : "text-foreground/35 group-hover:text-foreground/70"}`} />
         </div>
       </div>
-      <p className="text-[1.6rem] font-bold text-foreground tracking-tight leading-none mb-2">{value}</p>
-      <p className="text-[10px] text-muted-foreground/60">{sub}</p>
+      <p className={`text-[1.6rem] font-black tracking-tight leading-none mb-2 ${className ? "text-white" : "text-foreground"}`}>{value}</p>
+      <p className={`text-[10px] font-bold ${className ? "text-white/50" : "text-muted-foreground/60"}`}>{sub}</p>
     </div>
   );
 }
@@ -159,6 +159,7 @@ export default function Dashboard() {
   const [allTrx, setAllTrx]         = useState<Transaction[]>([]);
   const [period, setPeriod]         = useState<Period>("daily");
   const [now, setNow]               = useState(new Date());
+  const [rankPeriod, setRankPeriod] = useState<"monthly" | "all">("all");
   const [topStaff, setTopStaff]     = useState<{ name: string; total: number; count: number }[]>([]);
 
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
@@ -200,23 +201,33 @@ export default function Dashboard() {
 
       if (merged) {
         setAllTrx(merged);
-
-        // Top staff by revenue (all time)
-        const staffMap = new Map<string, { total: number; count: number }>();
-        merged.forEach(t => {
-          const name = t.profiles?.name || "Tidak diketahui";
-          const prev = staffMap.get(name) || { total: 0, count: 0 };
-          staffMap.set(name, { total: prev.total + t.total_amount, count: prev.count + 1 });
-        });
-        const sorted = Array.from(staffMap.entries())
-          .sort((a, b) => b[1].total - a[1].total)
-          .slice(0, 5)
-          .map(([name, v]) => ({ name, ...v }));
-        setTopStaff(sorted);
       }
       setLoading(false);
     })();
   }, []);
+
+  // Compute staff ranking
+  const getRankData = (transactions: Transaction[], periodType: "monthly" | "all") => {
+    let filtered = transactions;
+    if (periodType === "monthly") {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      filtered = transactions.filter(t => new Date(t.created_at) >= monthStart);
+    }
+
+    const staffMap = new Map<string, { total: number; count: number }>();
+    filtered.forEach(t => {
+      const name = t.profiles?.name || "Tidak diketahui";
+      const prev = staffMap.get(name) || { total: 0, count: 0 };
+      staffMap.set(name, { total: prev.total + t.total_amount, count: prev.count + 1 });
+    });
+
+    return Array.from(staffMap.entries())
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 5)
+      .map(([name, v]) => ({ name, ...v }));
+  };
+
+  const topStaffData = getRankData(allTrx, rankPeriod);
 
   // Compute period data
   const { start: periodStart, label: periodLabel } = getPeriodRange(period);
@@ -277,7 +288,7 @@ export default function Dashboard() {
             {now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           </p>
           <div className="flex items-center justify-end gap-1.5 mt-0.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-white/50 animate-[dot-pulse_2s_ease-in-out_infinite]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-primary/50 animate-[dot-pulse_2s_ease-in-out_infinite]" />
             <span className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">Live</span>
           </div>
         </div>
@@ -312,7 +323,7 @@ export default function Dashboard() {
 
       {/* ── Stat cards ── */}
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Pendapatan" value={`Rp ${fmtShort(periodRevenue)}`} sub={`Total ${periodLabel.toLowerCase()}`} icon={Coins} />
+        <StatCard title="Pendapatan" value={`Rp ${fmtShort(periodRevenue)}`} sub={`Total ${periodLabel.toLowerCase()}`} icon={Coins} className="bg-primary border-primary text-primary-foreground shadow-2xl shadow-primary/30" />
         <StatCard title="Transaksi"  value={`${periodCount}`}               sub={`Pesanan ${periodLabel.toLowerCase()}`} icon={ShoppingBag} />
         <StatCard title="Item Terjual" value={`${periodItems} pcs`}         sub={`Produk ${periodLabel.toLowerCase()}`}  icon={IceCream} />
         <StatCard title="Metode Favorit" value={favMethod}                  sub={periodCount > 0 ? `${periodQris}× QRIS · ${periodCount - periodQris}× Tunai` : "Belum ada data"} icon={TrendingUp} />
@@ -330,7 +341,7 @@ export default function Dashboard() {
               </h3>
               <p className="text-[10px] text-muted-foreground/60 mt-0.5">Pendapatan dalam Rupiah</p>
             </div>
-            <span className="text-xs font-bold text-white/70 bg-accent/30 border border-white/[0.08] rounded-lg px-2.5 py-1 tabular-nums">
+            <span className="text-xs font-bold text-primary/80 bg-primary/10 border border-primary/20 rounded-lg px-2.5 py-1 tabular-nums">
               Rp {fmt(chartTotal)}
             </span>
           </div>
@@ -339,8 +350,8 @@ export default function Dashboard() {
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor="var(--foreground)" stopOpacity={0.15} />
-                    <stop offset="100%" stopColor="var(--foreground)" stopOpacity={0} />
+                    <stop offset="0%"   stopColor="var(--primary)" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border)" strokeOpacity={0.2} />
@@ -354,9 +365,9 @@ export default function Dashboard() {
                   content={<ChartTooltip />}
                 />
                 <Area type="monotone" dataKey="sales"
-                  stroke="var(--foreground)" strokeOpacity={0.55} strokeWidth={1.5}
+                  stroke="var(--primary)" strokeOpacity={0.65} strokeWidth={2}
                   fill="url(#areaGrad)" dot={false}
-                  activeDot={{ r: 4, fill: "var(--foreground)", stroke: "var(--foreground)", strokeOpacity: 0.2, strokeWidth: 6 }}
+                  activeDot={{ r: 4, fill: "var(--primary)", stroke: "var(--primary)", strokeOpacity: 0.3, strokeWidth: 8 }}
                   animationDuration={800} animationEasing="ease-out"
                 />
               </AreaChart>
@@ -383,21 +394,34 @@ export default function Dashboard() {
               <h3 className="text-sm font-semibold text-foreground/80 flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-primary" /> Bintang Danus
               </h3>
-              <p className="text-[10px] text-muted-foreground/60 mt-0.5">Penjualan Terbanyak (All Time)</p>
+              <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                Peringkat {rankPeriod === "monthly" ? "Bulan Ini" : "Semua Waktu"}
+              </p>
             </div>
-            <span className="text-[9px] text-muted-foreground/40 border border-border/40 rounded-lg px-2 py-0.5 uppercase tracking-wider">
-              Hall of Fame
-            </span>
+            <div className="flex items-center bg-foreground/[0.04] p-0.5 rounded-lg border border-border/40">
+              <button 
+                onClick={() => setRankPeriod("monthly")}
+                className={`text-[9px] px-2 py-1 rounded-md transition-all font-bold uppercase tracking-widest ${rankPeriod === "monthly" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"}`}
+              >
+                Bulan Ini
+              </button>
+              <button 
+                onClick={() => setRankPeriod("all")}
+                className={`text-[9px] px-2 py-1 rounded-md transition-all font-bold uppercase tracking-widest ${rankPeriod === "all" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"}`}
+              >
+                All Time
+              </button>
+            </div>
           </div>
-          {topStaff.length === 0 ? (
+          {topStaffData.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center py-10 gap-2">
               <Star className="h-6 w-6 text-foreground/5 animate-pulse" />
               <p className="text-xs text-muted-foreground/40 text-center">Belum ada pejuang danus terdeteksi</p>
             </div>
           ) : (
             <div className="space-y-3.5">
-              {topStaff.map((s, i) => {
-                const maxTotal = topStaff[0].total;
+              {topStaffData.map((s, i) => {
+                const maxTotal = topStaffData[0].total;
                 const pct = Math.round((s.total / maxTotal) * 100);
                 
                 // Achievement Rank Styling
@@ -476,11 +500,11 @@ export default function Dashboard() {
           <div className="p-3 space-y-0.5">
             {recentTrx.length === 0 ? (
               <div className="flex flex-col items-center py-10 gap-2">
-                <IceCream className="h-6 w-6 text-white/10" />
+                <IceCream className="h-6 w-6 text-foreground/5" />
                 <p className="text-xs text-muted-foreground/40">Belum ada transaksi</p>
               </div>
             ) : recentTrx.map(trx => (
-              <div key={trx.id} className="flex items-center gap-3 px-2.5 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors group cursor-default">
+              <div key={trx.id} className="flex items-center gap-3 px-2.5 py-2.5 rounded-xl hover:bg-foreground/[0.03] transition-colors group cursor-default">
                 {/* Method icon */}
                 <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 border text-[9px] font-bold ${
                   trx.payment_method === "qris"
@@ -523,7 +547,7 @@ export default function Dashboard() {
           </div>
           {topProducts.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 py-10">
-              <IceCream className="h-6 w-6 text-white/10" />
+              <IceCream className="h-6 w-6 text-foreground/5" />
               <p className="text-xs text-muted-foreground/40">Tidak ada data untuk periode ini</p>
             </div>
           ) : (
@@ -542,7 +566,7 @@ export default function Dashboard() {
                     </div>
                     <div className="h-0.5 bg-foreground/[0.04] rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, background: i === 0 ? "rgba(var(--primary), 0.5)" : "rgba(var(--foreground), 0.18)", opacity: 0.5 }} />
+                        style={{ width: `${pct}%`, background: i === 0 ? "var(--primary)" : "var(--foreground)", opacity: i === 0 ? 0.45 : 0.15 }} />
                     </div>
                   </div>
                 );
@@ -550,7 +574,7 @@ export default function Dashboard() {
 
               {/* Bar chart */}
               {topProducts.length > 1 && (
-                <div className="pt-3 border-t border-white/[0.05]">
+                <div className="pt-3 border-t border-border/20">
                   <div className="h-[100px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={topProducts} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
@@ -562,9 +586,8 @@ export default function Dashboard() {
                           content={({ active, payload }) => {
                             if (!active || !payload?.length) return null;
                             return (
-                              <div className="px-2.5 py-1.5 rounded-lg text-xs"
-                                style={{ background: "rgba(18,18,18,0.97)", border: "1px solid rgba(255,255,255,0.10)" }}>
-                                <p className="text-white/70 font-bold">{payload[0].payload.name}: {payload[0].value} pcs</p>
+                              <div className="px-2.5 py-1.5 rounded-lg text-xs bg-popover/95 border border-border backdrop-blur-md shadow-xl">
+                                <p className="text-foreground font-bold">{payload[0].payload.name}: {payload[0].value} pcs</p>
                               </div>
                             );
                           }}

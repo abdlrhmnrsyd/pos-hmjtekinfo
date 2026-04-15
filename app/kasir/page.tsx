@@ -68,7 +68,7 @@ function CartDrawer({
       <div
         onClick={onClose}
         className={`fixed inset-0 z-40 transition-all duration-300 ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
-        style={{ background: "rgba(0,0,0,0.65)", backdropFilter: open ? "blur(4px)" : "blur(0px)" }}
+        style={{ background: "oklch(0 0 0 / 0.6)", backdropFilter: open ? "blur(4px)" : "blur(0px)" }}
       />
 
       {/* Drawer panel */}
@@ -82,7 +82,7 @@ function CartDrawer({
           <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6 text-center">
             <div
               className="h-20 w-20 bg-primary rounded-3xl flex items-center justify-center"
-              style={{ boxShadow: "0 0 60px var(--foreground)" }}
+              style={{ boxShadow: "0 0 60px var(--primary)" }}
             >
               <CheckCircle2 className="h-10 w-10 text-primary-foreground" />
             </div>
@@ -107,7 +107,7 @@ function CartDrawer({
           <>
             <div className="px-5 pt-5 pb-4 border-b border-border/40 shrink-0 flex items-center gap-3">
               <button onClick={() => setView("cart")}
-                className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground/30 hover:text-foreground/70 hover:bg-white/[0.05] transition-all">
+                className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground/30 hover:text-foreground/70 hover:bg-foreground/[0.05] transition-all">
                 <ChevronRight className="h-4 w-4 rotate-180" />
               </button>
               <div>
@@ -131,11 +131,11 @@ function CartDrawer({
                         ? "bg-primary text-primary-foreground border-primary"
                         : "border-foreground/[0.08] text-foreground/40 hover:border-foreground/[0.18] hover:text-foreground/70 bg-foreground/[0.02] surface-hover transition-colors"
                     }`}
-                    style={payMethod === key ? { boxShadow: "0 8px 32px var(--foreground)" } : undefined}
+                    style={payMethod === key ? { boxShadow: "0 8px 32px var(--primary)" } : undefined}
                   >
                     {payMethod === key && (
                       <div className="absolute inset-0 rounded-2xl"
-                        style={{ background: "radial-gradient(ellipse at 30% 0%, rgba(255,255,255,0.1) 0%, transparent 60%)" }} />
+                        style={{ background: "radial-gradient(ellipse at 30% 0%, oklch(1 0 0 / 0.1) 0%, transparent 60%)" }} />
                     )}
                     <Icon className="h-7 w-7 relative" />
                     <div className="text-center relative">
@@ -173,7 +173,7 @@ function CartDrawer({
                 onClick={handleConfirm}
                 disabled={isProcessing}
                 className="w-full h-13 rounded-2xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2.5"
-                style={{ height: 52, boxShadow: "0 4px 24px var(--foreground)" }}
+                style={{ height: 52, boxShadow: "0 4px 24px var(--primary)" }}
               >
                 <CheckCircle2 className="h-4 w-4" />
                 {isProcessing ? "Memproses..." : `Konfirmasi · Rp ${fmt(totalAmount)}`}
@@ -298,7 +298,7 @@ function CartDrawer({
                 <button
                   onClick={() => setView("payment")}
                   className="w-full rounded-2xl font-bold text-primary-foreground bg-primary hover:opacity-90 transition-all flex items-center justify-between px-5 group"
-                  style={{ height: 56, boxShadow: "0 4px 24px var(--foreground)" }}
+                  style={{ height: 56, boxShadow: "0 4px 24px var(--primary)" }}
                 >
                   <div className="flex items-center gap-2.5">
                     <Receipt className="h-4 w-4" />
@@ -385,7 +385,16 @@ export default function KasirPage() {
     } finally { setIsProcessing(false); }
   };
 
-  const handleLogout = async () => { await supabase.auth.signOut(); router.push("/login"); };
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      document.cookie = "sb-access-token=; path=/; max-age=0; SameSite=Lax";
+      document.cookie = "sb-refresh-token=; path=/; max-age=0; SameSite=Lax";
+      window.location.href = "/login";
+    } catch (e) {
+      console.error("error logging out", e);
+    }
+  };
 
   if (loading) return (
     <div className="flex h-screen items-center justify-center bg-background">
@@ -406,8 +415,8 @@ export default function KasirPage() {
             <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <div>
-            <p className="text-xs font-bold text-foreground/80 leading-tight">ICE HMJ Tekinfo</p>
-            <p className="text-[9px] text-muted-foreground/25 leading-tight">Point of Sale</p>
+            <p className="text-xs font-black text-primary leading-tight uppercase tracking-tight">ICE HMJ Tekinfo</p>
+            <p className="text-[9px] font-bold text-primary/60 leading-tight uppercase tracking-widest">Point of Sale</p>
           </div>
         </div>
 
@@ -417,8 +426,8 @@ export default function KasirPage() {
           </p>
           <Separator orientation="vertical" className="h-5 bg-foreground/[0.06] hidden sm:block" />
           <div className="hidden sm:flex flex-col items-end">
-            <span className="text-xs font-semibold text-foreground/60">{staffName}</span>
-            <span className="text-[9px] text-muted-foreground/25">{isAdmin ? "Admin" : "Staff aktif"}</span>
+            <span className="text-xs font-bold text-primary">{staffName}</span>
+            <span className="text-[9px] font-bold text-primary/50 uppercase tracking-widest">{isAdmin ? "Administrator" : "Staff Aktif"}</span>
           </div>
 
           <Separator orientation="vertical" className="h-5 bg-foreground/[0.06] hidden sm:block" />
@@ -426,7 +435,7 @@ export default function KasirPage() {
           {/* Profile button — all users */}
           <Link href="/profile">
             <button
-              className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-foreground/[0.06] hover:border-foreground/20 transition-all text-xs font-semibold"
+              className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl border border-primary/20 text-primary/60 hover:text-primary hover:bg-primary/[0.08] hover:border-primary/40 transition-all text-xs font-bold uppercase tracking-wider"
               title="Lihat profil saya"
             >
               <UserCircle className="h-3.5 w-3.5" />
@@ -434,7 +443,7 @@ export default function KasirPage() {
             </button>
             {/* Mobile: icon only */}
             <button
-              className="flex sm:hidden h-8 w-8 items-center justify-center rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-foreground/[0.06] transition-all"
+              className="flex sm:hidden h-8 w-8 items-center justify-center rounded-xl border border-primary/20 text-primary/50 hover:text-primary hover:bg-primary/[0.08] transition-all"
               title="Profil Saya"
             >
               <UserCircle className="h-3.5 w-3.5" />
@@ -447,7 +456,7 @@ export default function KasirPage() {
               <Separator orientation="vertical" className="h-5 bg-foreground/[0.06] hidden sm:block" />
               <Link href="/dashboard">
                 <button
-                  className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-foreground/[0.06] hover:border-foreground/20 transition-all text-xs font-semibold"
+                  className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-xl border border-primary/20 text-primary/60 hover:text-primary hover:bg-primary/[0.08] hover:border-primary/40 transition-all text-xs font-bold uppercase tracking-wider"
                   title="Buka halaman Admin"
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
@@ -455,7 +464,7 @@ export default function KasirPage() {
                 </button>
                 {/* Mobile: icon only */}
                 <button
-                  className="flex sm:hidden h-8 w-8 items-center justify-center rounded-xl border border-border/50 text-foreground/50 hover:text-foreground/90 hover:bg-foreground/[0.06] transition-all"
+                  className="flex sm:hidden h-8 w-8 items-center justify-center rounded-xl border border-primary/20 text-primary/50 hover:text-primary hover:bg-primary/[0.08] transition-all"
                   title="Dashboard Admin"
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
@@ -467,7 +476,7 @@ export default function KasirPage() {
           <ThemeToggle />
 
           <button onClick={handleLogout}
-            className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-accent transition-all" title="Keluar">
+            className="h-8 w-8 flex items-center justify-center rounded-xl border border-primary/20 text-primary/40 hover:text-primary hover:bg-primary/[0.08] transition-all" title="Keluar">
             <LogOut className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -476,8 +485,8 @@ export default function KasirPage() {
       {/* ── Search + title ── */}
       <div className="px-5 pt-5 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
         <div>
-          <h2 className="text-base font-bold text-foreground/80">Pilih Menu</h2>
-          <p className="text-[10px] text-muted-foreground/25 mt-0.5">{products.length} produk tersedia</p>
+          <h2 className="text-base font-black text-primary uppercase tracking-tight">Pilih Menu</h2>
+          <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest mt-0.5">{products.length} produk tersedia</p>
         </div>
         <div className="relative group min-w-[200px] sm:min-w-[260px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40 group-focus-within:text-foreground/50 transition-colors pointer-events-none" />
@@ -499,8 +508,8 @@ export default function KasirPage() {
       {/* ── Products grid ── */}
       <div className="flex-1 overflow-y-auto px-5 pb-28">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-60 border border-dashed border-white/[0.05] rounded-2xl gap-3">
-            <IceCream className="h-8 w-8 text-white/10" />
+          <div className="flex flex-col items-center justify-center h-60 border border-dashed border-border/20 rounded-2xl gap-3">
+            <IceCream className="h-8 w-8 text-foreground/10" />
             <p className="text-xs text-muted-foreground/40">
               {searchQuery ? `Tidak ada produk "${searchQuery}"` : "Belum ada produk aktif"}
             </p>
@@ -530,14 +539,14 @@ export default function KasirPage() {
                   )}
 
                   {/* Image */}
-                  <div className="aspect-square bg-white/[0.02] surface-hover transition-colors relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent z-10 pointer-events-none" />
+                  <div className="aspect-square bg-foreground/[0.02] surface-hover transition-colors relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent z-10 pointer-events-none" />
                     {product.image_url ? (
                       <img src={product.image_url} alt={product.name}
                         className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 opacity-70 group-hover:opacity-90" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <IceCream className="h-10 w-10 text-white/10 group-hover:text-muted-foreground/40 transition-colors" />
+                        <IceCream className="h-10 w-10 text-foreground/5 group-hover:text-muted-foreground/40 transition-colors" />
                       </div>
                     )}
                     {/* Price */}
@@ -580,7 +589,7 @@ export default function KasirPage() {
           }`}
           style={{
             background: "var(--primary)",
-            boxShadow: "0 8px 40px var(--foreground), 0 2px 8px rgba(0,0,0,0.4)",
+            boxShadow: "0 8px 40px var(--primary), 0 2px 8px oklch(0 0 0 / 0.4)",
             padding: "12px 20px 12px 14px",
           }}
         >

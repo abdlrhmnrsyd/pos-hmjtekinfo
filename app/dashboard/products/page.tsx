@@ -87,7 +87,7 @@ export default function ProductsPage() {
           <p className="text-xs text-muted-foreground mt-0.5">Kelola produk yang tersedia di sistem kasir.</p>
         </div>
         <button onClick={handleOpenCreate}
-          className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all w-fit shadow-lg shadow-primary/20">
+          className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all w-fit shadow-xl shadow-primary/25 active:scale-95">
           <Plus className="h-3.5 w-3.5" /> Tambah Produk
         </button>
       </div>
@@ -125,7 +125,7 @@ export default function ProductsPage() {
                 </TableCell>
               </TableRow>
             ) : products.map(p => (
-              <TableRow key={p.id} className="border-border/10 hover:bg-foreground/[0.01] transition-colors group">
+              <TableRow key={p.id} className="border-border/10 hover:bg-foreground/[0.02] transition-colors group">
                 <TableCell className="px-5 py-3">
                   <div className="h-9 w-9 rounded-xl overflow-hidden border border-border/40 bg-foreground/[0.02] group-hover:border-foreground/20 transition-all">
                     {p.image_url ? <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
@@ -146,11 +146,11 @@ export default function ProductsPage() {
                 <TableCell className="text-right px-5">
                   <div className="flex justify-end gap-1.5 transition-all">
                     <button onClick={() => handleOpenEdit(p)}
-                      className="h-7 w-7 rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-foreground/[0.08] flex items-center justify-center transition-colors border border-transparent hover:border-border/30">
+                      className="h-7 w-7 rounded-lg text-muted-foreground/40 hover:text-foreground hover:bg-foreground/[0.08] flex items-center justify-center transition-all border border-transparent hover:border-border/30">
                       <Edit className="h-3 w-3" />
                     </button>
                     <button onClick={() => toggleStatus(p.id, p.is_active)} title={p.is_active ? "Nonaktifkan" : "Aktifkan"}
-                      className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors hover:bg-foreground/[0.08] border border-transparent hover:border-border/30 ${p.is_active ? "text-primary/70" : "text-muted-foreground/30 hover:text-muted-foreground"}`}>
+                      className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all hover:bg-foreground/[0.08] border border-transparent hover:border-border/30 ${p.is_active ? "text-primary/70" : "text-muted-foreground/20 hover:text-muted-foreground"}`}>
                       <IceCream className="h-3 w-3" />
                     </button>
                     <button onClick={() => deleteProduct(p.id)}

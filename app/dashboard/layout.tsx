@@ -28,18 +28,18 @@ export default function DashboardLayout({
           style={{ background: "var(--background)", backdropFilter: "blur(20px)" }}
         >
           <div className="flex items-center gap-3 flex-1">
-            <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors p-2 rounded-xl transition-all h-9 w-9" />
+            <SidebarTrigger className="-ml-1 text-primary hover:text-primary/70 hover:bg-primary/10 transition-all h-9 w-9 rounded-xl" />
             <Separator orientation="vertical" className="h-5 bg-border/40 hidden sm:block" />
             <Breadcrumb className="hidden sm:flex">
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard" className="text-xs text-muted-foreground hover:text-foreground transition-colors font-semibold">
+                  <BreadcrumbLink href="/dashboard" className="text-xs text-primary/60 hover:text-primary transition-colors font-bold uppercase tracking-widest">
                     Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="text-muted-foreground/20" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-xs text-foreground/60 font-bold">
+                  <BreadcrumbPage className="text-xs text-primary font-black uppercase tracking-widest">
                     Overview
                   </BreadcrumbPage>
                 </BreadcrumbItem>
@@ -48,8 +48,8 @@ export default function DashboardLayout({
           </div>
           {/* Live indicator */}
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-white/40 animate-[dot-pulse_2s_ease-in-out_infinite]" />
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest hidden sm:block font-semibold">Live</span>
+            <span className="h-2 w-2 rounded-full bg-primary/40 animate-[dot-pulse_2s_ease-in-out_infinite]" />
+            <span className="text-[10px] text-primary/60 uppercase tracking-widest hidden sm:block font-bold">Live</span>
           </div>
           <div className="flex items-center gap-2 ml-4">
             <ThemeToggle />

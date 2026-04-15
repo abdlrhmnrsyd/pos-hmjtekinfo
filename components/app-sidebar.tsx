@@ -48,6 +48,8 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    document.cookie = "sb-access-token=; path=/; max-age=0; SameSite=Lax";
+    document.cookie = "sb-refresh-token=; path=/; max-age=0; SameSite=Lax";
     router.push("/login");
   };
 
@@ -62,8 +64,8 @@ export function AppSidebar() {
             <img src="/logo.jpg" alt="ICE HMJ Logo" className="w-full h-full object-cover" />
           </div>
           <div>
-            <p className="text-sm font-bold text-foreground tracking-tight leading-none">ICE HMJ</p>
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-0.5">Tekinfo</p>
+            <p className="text-sm font-black text-primary tracking-tight leading-none">ICE HMJ</p>
+            <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest mt-0.5">Tekinfo</p>
           </div>
         </div>
       </SidebarHeader>
@@ -71,7 +73,7 @@ export function AppSidebar() {
       {/* Nav */}
       <SidebarContent className="px-2 py-4 bg-sidebar flex-1">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[9px] font-bold uppercase tracking-[0.20em] text-muted-foreground px-2">
+          <SidebarGroupLabel className="text-[9px] font-black uppercase tracking-[0.25em] text-primary/80 px-2 mb-2">
             Menu Utama
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -89,8 +91,10 @@ export function AppSidebar() {
                       }`}
                       render={
                         <a href={item.url} className="flex items-center gap-3 px-3 w-full">
-                          <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? "text-primary-foreground" : "text-muted-foreground/50"}`} />
-                          <span className="text-[13px]">{item.title}</span>
+                          <item.icon className={`h-[18px] w-[18px] shrink-0 ${isActive ? "text-primary-foreground" : "text-primary/40 group-hover:text-primary transition-colors"}`} />
+                          <span className={`text-[13px] ${isActive ? "text-primary-foreground" : "text-primary/80 group-hover:text-primary font-bold transition-all"}`}>
+                            {item.title}
+                          </span>
                         </a>
                       }
                     />
@@ -118,7 +122,7 @@ export function AppSidebar() {
           </div>
           <button
             onClick={handleLogout}
-            className="text-muted-foreground/40 hover:text-foreground/70 p-1.5 rounded-lg transition-colors hover:bg-foreground/[0.06] shrink-0"
+            className="text-primary/40 hover:text-primary p-1.5 rounded-lg transition-colors hover:bg-primary/[0.08] shrink-0"
             title="Keluar"
           >
             <LogOut className="h-4 w-4" />

@@ -40,8 +40,12 @@ export default function LoginPage() {
         email: profileList[0].email, password,
       });
       if (authError) { setError("Password salah."); setLoading(false); return; }
-      if (!data.user) return;
+      if (!data.user || !data.session) return;
       
+      // Set cookies for 7 days
+      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=604800; SameSite=Lax; ${window.location.protocol === "https:" ? "Secure" : ""}`;
+      document.cookie = `sb-refresh-token=${data.session.refresh_token}; path=/; max-age=604800; SameSite=Lax; ${window.location.protocol === "https:" ? "Secure" : ""}`;
+
       // Admin dan Staff semuanya diarahkan ke Kasir terlebih dahulu
       router.push("/kasir");
     } catch { setError("Terjadi kesalahan. Coba lagi."); } 
@@ -59,7 +63,11 @@ export default function LoginPage() {
       if (data.user) await supabase.from("profiles").upsert({ id: data.user.id, name: regName, email: regEmail });
       if (data.user && data.session === null) {
         setSuccess("Akun dibuat! Cek email untuk konfirmasi.");
-      } else { 
+      } else if (data.session) { 
+        // Set cookies for 7 days
+        document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=604800; SameSite=Lax; ${window.location.protocol === "https:" ? "Secure" : ""}`;
+        document.cookie = `sb-refresh-token=${data.session.refresh_token}; path=/; max-age=604800; SameSite=Lax; ${window.location.protocol === "https:" ? "Secure" : ""}`;
+
         setSuccess("Berhasil! Mengalihkan..."); 
         setTimeout(() => { window.location.href = "/kasir"; }, 1500); 
       }
