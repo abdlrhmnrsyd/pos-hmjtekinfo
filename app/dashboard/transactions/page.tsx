@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { User, CreditCard, Banknote, Search, X } from "lucide-react";
 
-interface TransactionItem { quantity: number; products: { name: string } | { name: string }[] | null; }
+interface TransactionItem { quantity: number; products: { name: string } | null; }
 interface StaffProfile   { name: string; }
 interface Transaction {
   id: string; created_at: string; total_amount: number;

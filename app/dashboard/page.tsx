@@ -12,7 +12,7 @@ import {
 } from "recharts";
 
 /* ─── Types ─── */
-interface TransactionItem { quantity: number; products: { name: string } | { name: string }[] | null; }
+interface TransactionItem { quantity: number; products: { name: string } | null; }
 interface Transaction {
   id: string; created_at: string; total_amount: number; payment_method: string;
   profiles: { name: string } | null;

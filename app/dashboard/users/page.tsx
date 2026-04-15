@@ -102,7 +102,7 @@ export default function UsersPage() {
       /* 1. Fetch all profiles */
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, name, role, created_at");
+        .select("id, name, email, role, created_at");
 
       if (!profiles) { setLoading(false); return; }
 
