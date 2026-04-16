@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Coins, ShoppingBag, IceCream, TrendingUp,
-  ArrowUpRight, CalendarDays, User, Trophy, Star, Medal, Crown,
+  CalendarDays, Trophy, Star, Medal, Crown,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
