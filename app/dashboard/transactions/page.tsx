@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { User, CreditCard, Banknote, Search, X, Download } from "lucide-react";
+import { User, CreditCard, Banknote, Search, X, Download, Trash2 } from "lucide-react";
 
 interface TransactionItem { quantity: number; products: { name: string } | null; }
 interface StaffProfile   { name: string; }
@@ -55,6 +55,16 @@ export default function TransactionsPage() {
     setLoading(false);
   };
   useEffect(() => { loadData(); }, []);
+  
+  const deleteTransaction = async (id: string) => {
+    if (!confirm("Yakin ingin menghapus transaksi ini? Tindakan ini tidak bisa dibatalkan.")) return;
+    const { error } = await supabase.from("transactions").delete().eq("id", id);
+    if (error) {
+      alert(`Gagal menghapus transaksi: ${error.message}`);
+      return;
+    }
+    loadData();
+  };
 
   const formatDate = (s: string) =>
     new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(s));
@@ -220,7 +230,8 @@ export default function TransactionsPage() {
               <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Kasir</TableHead>
               <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Bayar</TableHead>
               <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Pesanan</TableHead>
-              <TableHead className="h-10 text-right px-5 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Total</TableHead>
+              <TableHead className="h-10 text-right text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">Total</TableHead>
+              <TableHead className="h-10 text-right px-5 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest w-[80px]">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -288,10 +299,19 @@ export default function TransactionsPage() {
                 </TableCell>
 
                 {/* Total */}
+                <TableCell className="text-right font-bold text-foreground/80 tabular-nums">
+                  Rp {trx.total_amount.toLocaleString("id-ID")}
+                </TableCell>
+
+                {/* Aksi */}
                 <TableCell className="text-right px-5">
-                  <span className="text-sm font-bold text-foreground/80 tabular-nums">
-                    Rp {trx.total_amount.toLocaleString("id-ID")}
-                  </span>
+                  <button
+                    onClick={() => deleteTransaction(trx.id)}
+                    className="h-7 w-7 rounded-lg text-muted-foreground/20 hover:text-red-400 hover:bg-red-400/10 flex items-center justify-center transition-colors border border-transparent hover:border-red-400/20"
+                    title="Hapus Transaksi"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
                 </TableCell>
               </TableRow>
             ))}

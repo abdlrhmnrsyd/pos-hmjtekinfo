@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import {
   Users, Search, X, TrendingUp, ShoppingBag, Coins,
   CreditCard, Banknote, ChevronDown, ChevronUp,
-  Crown, Star, Medal,
+  Crown, Star, Medal, Trash2, Shield, ShieldAlert, UserCog
 } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -95,63 +95,88 @@ export default function UsersPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "staff" | "user">("all");
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
+  const loadData = async () => {
+    setLoading(true);
 
-      /* 1. Fetch all profiles */
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, name, email, role, created_at");
+    /* 1. Fetch all profiles */
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, name, email, role, created_at");
 
-      if (!profiles) { setLoading(false); return; }
+    if (!profiles) { setLoading(false); return; }
 
-      // Fetch auth emails via admin — workaround: store email in profiles or use auth.users
-      // For now we'll use id as fallback email indicator
-      const profileIds = profiles.map((p: any) => p.id);
+    const profileIds = profiles.map((p: any) => p.id);
 
-      /* 2. Fetch all transactions (only fields we need) */
-      const { data: trxRaw } = await supabase
-        .from("transactions")
-        .select("id, staff_id, total_amount, payment_method, created_at")
-        .in("staff_id", profileIds);
+    /* 2. Fetch all transactions */
+    const { data: trxRaw } = await supabase
+      .from("transactions")
+      .select("id, staff_id, total_amount, payment_method, created_at")
+      .in("staff_id", profileIds);
 
-      /* 3. Aggregate per user */
-      const trxMap = new Map<string, {
-        count: number; total: number; qris: number; cash: number; last: string | null;
-      }>();
+    /* 3. Aggregate per user */
+    const trxMap = new Map<string, {
+      count: number; total: number; qris: number; cash: number; last: string | null;
+    }>();
 
-      (trxRaw || []).forEach((t: any) => {
-        const prev = trxMap.get(t.staff_id) || { count: 0, total: 0, qris: 0, cash: 0, last: null };
-        trxMap.set(t.staff_id, {
-          count: prev.count + 1,
-          total: prev.total + t.total_amount,
-          qris:  prev.qris  + (t.payment_method === "qris" ? 1 : 0),
-          cash:  prev.cash  + (t.payment_method === "cash" ? 1 : 0),
-          last:  prev.last  ? (new Date(t.created_at) > new Date(prev.last) ? t.created_at : prev.last) : t.created_at,
-        });
+    (trxRaw || []).forEach((t: any) => {
+      const prev = trxMap.get(t.staff_id) || { count: 0, total: 0, qris: 0, cash: 0, last: null };
+      trxMap.set(t.staff_id, {
+        count: prev.count + 1,
+        total: prev.total + t.total_amount,
+        qris:  prev.qris  + (t.payment_method === "qris" ? 1 : 0),
+        cash:  prev.cash  + (t.payment_method === "cash" ? 1 : 0),
+        last:  prev.last  ? (new Date(t.created_at) > new Date(prev.last) ? t.created_at : prev.last) : t.created_at,
       });
+    });
 
-      const merged: UserStat[] = profiles.map((p: any) => {
-        const stats = trxMap.get(p.id) || { count: 0, total: 0, qris: 0, cash: 0, last: null };
-        return {
-          id: p.id,
-          name: p.name || "—",
-          email: p.email || "—",
-          role: p.role || "user",
-          created_at: p.created_at,
-          trxCount: stats.count,
-          trxTotal: stats.total,
-          qrisCount: stats.qris,
-          cashCount: stats.cash,
-          lastTrx: stats.last,
-        };
-      });
+    const merged: UserStat[] = profiles.map((p: any) => {
+      const stats = trxMap.get(p.id) || { count: 0, total: 0, qris: 0, cash: 0, last: null };
+      return {
+        id: p.id,
+        name: p.name || "—",
+        email: p.email || "—",
+        role: p.role || "user",
+        created_at: p.created_at,
+        trxCount: stats.count,
+        trxTotal: stats.total,
+        qrisCount: stats.qris,
+        cashCount: stats.cash,
+        lastTrx: stats.last,
+      };
+    });
 
-      setUsers(merged);
-      setLoading(false);
-    })();
-  }, []);
+    setUsers(merged);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const deleteUser = async (user: UserStat) => {
+    if (user.role === "admin") {
+      alert("Anda tidak bisa menghapus sesama Admin atau akun Anda sendiri.");
+      return;
+    }
+    if (!confirm(`Hapus profil "${user.name}"? Akses dashboard user ini akan hilang.`)) return;
+    const { error } = await supabase.from("profiles").delete().eq("id", user.id);
+    if (error) {
+      alert(`Gagal menghapus user: ${error.message}`);
+      return;
+    }
+    loadData();
+  };
+
+  const updateRole = async (user: UserStat, newRole: string) => {
+    if (user.role === "admin") {
+      alert("Anda tidak bisa mengubah role sesama Admin atau akun Anda sendiri.");
+      return;
+    }
+    const { error } = await supabase.from("profiles").update({ role: newRole }).eq("id", user.id);
+    if (error) {
+      alert(`Gagal mengubah role: ${error.message}`);
+      return;
+    }
+    loadData();
+  };
 
   /* ── Sort & filter ── */
   const handleSort = (key: SortKey) => {
@@ -311,9 +336,10 @@ export default function UsersPage() {
               <TableHead className="h-10">
                 <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60">QRIS / Tunai</span>
               </TableHead>
-              <TableHead className="h-10 pr-5">
+              <TableHead className="h-10">
                 <SortHeader label="Terakhir Aktif" sortKey="lastTrx" current={sortKey} dir={sortDir} onClick={handleSort} />
               </TableHead>
+              <TableHead className="h-10 text-right px-5 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest w-[100px]">Aksi</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -437,7 +463,7 @@ export default function UsersPage() {
                   </TableCell>
 
                   {/* Terakhir aktif */}
-                  <TableCell className="pr-5">
+                  <TableCell>
                     {user.lastTrx ? (
                       <div>
                         <p className="text-[10px] font-semibold text-foreground/50 whitespace-nowrap">
@@ -449,6 +475,37 @@ export default function UsersPage() {
                       </div>
                     ) : (
                       <span className="text-[10px] text-foreground/10 italic">Belum transaksi</span>
+                    )}
+                  </TableCell>
+
+                  {/* Aksi */}
+                  <TableCell className="text-right px-5">
+                    {user.role !== "admin" ? (
+                      <div className="flex justify-end items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Change Role Button */}
+                        <button
+                          onClick={() => {
+                            const roles = ["admin", "staff", "user"];
+                            const next = roles[(roles.indexOf(user.role) + 1) % roles.length];
+                            if (confirm(`Ubah role "${user.name}" menjadi ${next.toUpperCase()}?`)) updateRole(user, next);
+                          }}
+                          className="h-7 w-7 rounded-lg text-muted-foreground/30 hover:text-primary hover:bg-primary/10 flex items-center justify-center transition-all border border-transparent hover:border-primary/20"
+                          title="Ubah Role"
+                        >
+                          <UserCog className="h-3 w-3" />
+                        </button>
+
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => deleteUser(user)}
+                          className="h-7 w-7 rounded-lg text-muted-foreground/20 hover:text-red-400 hover:bg-red-400/10 flex items-center justify-center transition-colors border border-transparent hover:border-red-400/20"
+                          title="Hapus Profil"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-[9px] font-bold text-muted-foreground/30 uppercase tracking-widest italic pr-2">Protected</span>
                     )}
                   </TableCell>
                 </TableRow>

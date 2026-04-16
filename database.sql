@@ -23,7 +23,7 @@ CREATE TABLE public.products (
 
 CREATE TABLE public.transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  staff_id UUID NOT NULL REFERENCES auth.users(id),
+  staff_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   total_amount NUMERIC NOT NULL,
   payment_method TEXT NOT NULL CHECK (payment_method IN ('cash', 'qris')),
   status TEXT DEFAULT 'completed',
@@ -71,14 +71,7 @@ ALTER TABLE public.transactions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transaction_items DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 
--- 6. Insert Mock Data: Es Krim
-INSERT INTO public.products (name, price, image_url) VALUES 
-('Cone Coklat Klasik', 15000, 'https://images.unsplash.com/photo-1557142046-c704a3adf8ac?w=500&q=80'),
-('Sundae Strawberry', 20000, 'https://images.unsplash.com/photo-1553177595-4de2bb0842b9?w=500&q=80'),
-('Sorbet Mangga', 18000, 'https://images.unsplash.com/photo-1570197780862-2f3b9e49635b?w=500&q=80'),
-('Matcha Float', 25000, 'https://images.unsplash.com/photo-1563805042-7684c8a9e9cb?w=500&q=80'),
-('Es Krim Vanilla Oreo', 22000, 'https://images.unsplash.com/photo-1497034825429-22a92611a61c?w=500&q=80'),
-('Popsicle Buah Naga', 12000, 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500&q=80');
+
 
 -- 7. CLEANUP AKUN ERROR
 -- Menghapus sisa akun manual yang membuat Supabase 500 Error
