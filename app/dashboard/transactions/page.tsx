@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { User, CreditCard, Banknote, Search, X, Download, Trash2, Pencil } from "lucide-react";
+import { User, CreditCard, Banknote, Search, X, Download, Trash2, Pencil, Copy, Check } from "lucide-react";
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog";
 
 interface TransactionItem {
   product_id: string;
   quantity: number;
   price_at_time: number;
-  products: { name: string } | null;
+  products: { name: string; price: number } | null;
 }
 interface StaffProfile   { name: string; }
 interface Transaction {
@@ -28,7 +28,14 @@ export default function TransactionsPage() {
   const [search, setSearch]     = useState("");
   const [filterMethod, setFilterMethod] = useState<"all"| "cash" | "qris">("all");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -36,7 +43,7 @@ export default function TransactionsPage() {
     // Step 1: Fetch transactions
     const { data: trxRaw } = await supabase
       .from("transactions")
-      .select("id, created_at, total_amount, payment_method, staff_id, notes, transaction_items(product_id, quantity, price_at_time, products(name))")
+      .select("id, created_at, total_amount, payment_method, staff_id, notes, transaction_items(product_id, quantity, price_at_time, products(name, price))")
       .order("created_at", { ascending: false });
 
     if (!trxRaw) { setLoading(false); return; }
@@ -191,7 +198,7 @@ export default function TransactionsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40 group-focus-within:text-foreground/50 transition-colors pointer-events-none" />
           <input
             placeholder="Cari kasir, produk, ID..."
-            className="w-full h-9 pl-8 pr-8 bg-foreground/[0.03] border border-border rounded-xl text-xs text-foreground/70 placeholder:text-muted-foreground/40 outline-none focus:border-foreground/20 transition-all"
+            className="w-full h-9 pl-8 pr-8 bg-muted/50 border border-border rounded-xl text-xs text-foreground focus:border-primary/50 transition-all outline-none"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -210,8 +217,8 @@ export default function TransactionsPage() {
               onClick={() => setFilterMethod(m)}
               className={`h-8 px-3.5 rounded-[10px] text-[11px] font-semibold transition-all ${
                 filterMethod === m
-                  ? "bg-primary text-primary-foreground"
-                  : "text-foreground/35 hover:text-foreground/70"
+                  ? "bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(234,88,12,0.2)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
               }`}
             >
               {m === "all" ? "Semua" : m === "cash" ? `Tunai (${totalCash})` : `QRIS (${totalQris})`}
@@ -224,10 +231,10 @@ export default function TransactionsPage() {
       <div className={surface}>
         <div className="p-5 border-b border-border/40 flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-foreground/80">Semua Transaksi</p>
+            <p className="text-sm font-bold text-foreground">Semua Transaksi</p>
             <p className="text-[10px] text-muted-foreground/60 mt-0.5">Termasuk informasi kasir yang menangani.</p>
           </div>
-          <p className="text-[10px] text-muted-foreground/40 font-mono">{filtered.length} hasil</p>
+          <p className="text-[10px] text-muted-foreground font-mono bg-muted/40 px-2 py-0.5 rounded-md border border-border/50">{filtered.length} hasil</p>
         </div>
 
         <Table>
@@ -262,36 +269,41 @@ export default function TransactionsPage() {
               <TableRow key={trx.id} className="border-border/20 hover:bg-foreground/[0.01] transition-colors group">
                 {/* ID */}
                 <TableCell className="px-5 py-4">
-                  <span className="font-mono text-[10px] text-muted-foreground/60 group-hover:text-foreground/50 transition-colors">
-                    #{trx.id.substring(0, 8).toUpperCase()}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-[10px] text-muted-foreground/60 group-hover:text-foreground/50 transition-colors">
+                      #{trx.id.substring(0, 8).toUpperCase()}
+                    </span>
+                    <button onClick={() => handleCopy(trx.id)} className="h-5 w-5 rounded-md hover:bg-muted-foreground/10 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
+                      {copiedId === trx.id ? <Check className="h-2.5 w-2.5 text-primary" /> : <Copy className="h-2.5 w-2.5 text-muted-foreground/50" />}
+                    </button>
+                  </div>
                 </TableCell>
 
                 {/* Waktu */}
-                <TableCell className="text-[10px] text-foreground/35 whitespace-nowrap">
+                <TableCell className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
                   {formatDate(trx.created_at)}
                 </TableCell>
 
                 {/* Kasir */}
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-lg bg-foreground/[0.05] border border-border flex items-center justify-center shrink-0">
-                      <span className="text-[8px] font-bold text-muted-foreground/70">
+                    <div className="h-6 w-6 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0 shadow-sm">
+                      <span className="text-[8px] font-bold text-foreground/60">
                         {(trx.profiles?.name || "?").substring(0, 2).toUpperCase()}
                       </span>
                     </div>
-                    <span className="text-[11px] font-semibold text-foreground/60 group-hover:text-foreground transition-colors whitespace-nowrap">
-                      {trx.profiles?.name || <span className="text-muted-foreground/40 italic">Tidak diketahui</span>}
+                    <span className="text-[11px] font-semibold text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
+                      {trx.profiles?.name || <span className="text-muted-foreground/40 italic text-[10px]">Tidak diketahui</span>}
                     </span>
                   </div>
                 </TableCell>
 
                 {/* Metode */}
                 <TableCell>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold border uppercase tracking-wide ${
+                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] font-bold border uppercase tracking-wide ${
                     trx.payment_method === "qris"
-                      ? "border-primary/20 text-primary bg-primary/10"
-                      : "border-border text-muted-foreground/60 bg-transparent"
+                      ? "border-primary/40 text-primary bg-primary/20"
+                      : "border-border text-muted-foreground bg-muted"
                   }`}>
                     {trx.payment_method === "qris"
                       ? <><CreditCard className="h-2.5 w-2.5" /> QRIS</>
@@ -307,7 +319,7 @@ export default function TransactionsPage() {
                 </TableCell>
 
                 {/* Total */}
-                <TableCell className="text-right font-bold text-foreground/80 tabular-nums">
+                <TableCell className="text-right font-black text-foreground tabular-nums">
                   Rp {trx.total_amount.toLocaleString("id-ID")}
                 </TableCell>
 
@@ -319,14 +331,14 @@ export default function TransactionsPage() {
                         setSelectedTransaction(trx);
                         setIsEditDialogOpen(true);
                       }}
-                      className="h-7 w-7 rounded-lg text-muted-foreground/20 hover:text-primary hover:bg-primary/10 flex items-center justify-center transition-all border border-transparent hover:border-primary/20"
+                      className="h-7 w-7 rounded-lg text-muted-foreground/60 hover:text-primary hover:bg-muted flex items-center justify-center transition-all border border-border shadow-sm"
                       title="Edit Transaksi"
                     >
                       <Pencil className="h-3 w-3" />
                     </button>
                     <button
                       onClick={() => deleteTransaction(trx.id)}
-                      className="h-7 w-7 rounded-lg text-muted-foreground/20 hover:text-red-400 hover:bg-red-400/10 flex items-center justify-center transition-colors border border-transparent hover:border-red-400/20"
+                      className="h-7 w-7 rounded-lg text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 flex items-center justify-center transition-all border border-border hover:border-red-500/30 shadow-sm"
                       title="Hapus Transaksi"
                     >
                       <Trash2 className="h-3 w-3" />

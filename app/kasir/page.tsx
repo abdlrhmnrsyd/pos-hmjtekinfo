@@ -23,9 +23,9 @@ const fmt = (n: number) => n.toLocaleString("id-ID");
 /* ─── Qty Stepper ─── */
 function QtyControl({ qty, onInc, onDec }: { qty: number; onInc: () => void; onDec: () => void }) {
   return (
-    <div className="flex items-center border border-border/50 rounded-xl overflow-hidden bg-foreground/[0.02] surface-hover transition-colors">
+    <div className="flex items-center border border-border rounded-xl overflow-hidden bg-muted/40 surface-hover transition-colors">
       <button onClick={onDec}
-        className="w-9 h-9 flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] transition-all active:scale-90">
+        className="w-9 h-9 flex items-center justify-center text-muted-foreground/80 hover:text-foreground hover:bg-muted/80 transition-all active:scale-90 border-r border-border">
         <Minus className="h-3 w-3" />
       </button>
       <span className="w-9 text-center text-sm font-bold text-foreground/85 tabular-nums select-none">{qty}</span>
@@ -97,7 +97,7 @@ function CartDrawer({
             </div>
             <button
               onClick={onClose}
-              className="mt-4 h-11 px-8 rounded-2xl bg-foreground/[0.06] border border-border/50 text-sm text-foreground/60 hover:bg-foreground/[0.10] hover:text-foreground/80 transition-all"
+              className="mt-4 h-11 px-8 rounded-2xl bg-muted border border-border text-sm font-semibold text-foreground/80 hover:bg-accent transition-all"
             >
               Tutup
             </button>
@@ -129,7 +129,7 @@ function CartDrawer({
                     className={`relative h-32 rounded-2xl flex flex-col items-center justify-center gap-3 border transition-all duration-200 overflow-hidden ${
                       payMethod === key
                         ? "bg-primary text-primary-foreground border-primary"
-                        : "border-foreground/[0.08] text-foreground/40 hover:border-foreground/[0.18] hover:text-foreground/70 bg-foreground/[0.02] surface-hover transition-colors"
+                        : "border-border text-foreground/60 hover:border-foreground/80 hover:text-foreground bg-muted/30 surface-hover transition-colors"
                     }`}
                     style={payMethod === key ? { boxShadow: "0 8px 32px var(--primary)" } : undefined}
                   >
@@ -148,7 +148,7 @@ function CartDrawer({
 
               {/* Order summary */}
               <div
-                className="rounded-2xl p-4 space-y-2.5 bg-foreground/[0.02] border border-border/40"
+                className="rounded-2xl p-4 space-y-2.5 bg-muted/40 border border-border"
               >
                 <p className="text-[9px] font-semibold text-muted-foreground/25 uppercase tracking-widest mb-3">Rincian Pesanan</p>
                 {cart.map(item => (
@@ -200,7 +200,7 @@ function CartDrawer({
                 <div className="flex items-center gap-2">
                   {cart.length > 0 && (
                     <button onClick={onClear}
-                      className="text-[9px] font-medium text-muted-foreground/25 hover:text-red-400/60 transition-colors border border-border/30 hover:border-red-400/20 rounded-lg px-2.5 py-1">
+                      className="text-[9px] font-bold text-muted-foreground hover:text-red-500 transition-colors border border-border hover:border-red-500/50 rounded-lg px-2.5 py-1 bg-muted/20">
                       Kosongkan
                     </button>
                   )}
@@ -220,7 +220,7 @@ function CartDrawer({
               {cart.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full py-24 gap-4">
                   <div
-                    className="h-20 w-20 rounded-3xl flex items-center justify-center border border-border/40 bg-foreground/[0.02]"
+                    className="h-20 w-20 rounded-3xl flex items-center justify-center border border-border bg-muted/40"
                   >
                     <ShoppingCart className="h-9 w-9 text-foreground/10" />
                   </div>
@@ -237,7 +237,7 @@ function CartDrawer({
                       className="group flex gap-3.5 p-3 rounded-2xl hover:bg-foreground/[0.03] transition-colors"
                     >
                       {/* Thumbnail */}
-                      <div className="h-16 w-16 rounded-xl overflow-hidden shrink-0 border border-border/40 bg-foreground/[0.02] surface-hover transition-colors">
+                      <div className="h-16 w-16 rounded-xl overflow-hidden shrink-0 border border-border bg-muted/40 surface-hover transition-colors">
                         {item.image_url
                           ? <img src={item.image_url} className="w-full h-full object-cover" alt="" />
                           : (
@@ -526,7 +526,7 @@ export default function KasirPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40 group-focus-within:text-foreground/50 transition-colors pointer-events-none" />
           <input
             placeholder="Cari produk..."
-            className="w-full h-9 pl-8 pr-8 bg-foreground/[0.03] border border-border/40 rounded-xl text-xs text-foreground/70 placeholder:text-muted-foreground/40 outline-none focus:border-foreground/20 focus:bg-foreground/[0.05] transition-all"
+            className="w-full h-9 pl-8 pr-8 bg-muted/50 border border-border rounded-xl text-xs text-foreground focus:border-primary/50 transition-all"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
@@ -556,11 +556,11 @@ export default function KasirPage() {
                 <button
                   key={product.id}
                   onClick={() => addToCart(product)}
-                  className={`overflow-hidden text-left rounded-2xl transition-all duration-200 active:scale-[0.96] group relative border ${
-                    inCart
-                      ? "border-primary/50 bg-primary/[0.05]"
-                      : "border-border/30 bg-foreground/[0.02] surface-hover transition-colors hover:bg-foreground/[0.05] hover:border-foreground/[0.14]"
-                  }`}
+                    className={`overflow-hidden text-left rounded-2xl transition-all duration-200 active:scale-[0.96] group relative border ${
+                      inCart
+                        ? "border-primary bg-primary/10 shadow-[0_0_15px_rgba(234,88,12,0.15)]"
+                        : "border-border bg-muted/30 surface-hover transition-colors hover:bg-muted/50 hover:border-foreground/20"
+                    }`}
                   style={inCart ? { boxShadow: "0 0 0 1px var(--primary)" } : undefined}
                 >
                   {/* Qty badge */}
@@ -580,8 +580,8 @@ export default function KasirPage() {
                         className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 opacity-70 group-hover:opacity-90" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <IceCream className="h-10 w-10 text-foreground/5 group-hover:text-muted-foreground/40 transition-colors" />
-                      </div>
+                      <IceCream className="h-10 w-10 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
+                    </div>
                     )}
                     {/* Price */}
                     <div className="absolute bottom-2.5 left-2.5 z-20">

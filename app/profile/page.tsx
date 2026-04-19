@@ -7,8 +7,16 @@ import {
   User, Lock, Eye, EyeOff, ShoppingBag, Coins,
   CreditCard, Banknote, CheckCircle2, XCircle, AlertCircle,
   KeyRound, Receipt, ArrowLeft, IceCream, CalendarDays,
-  Trophy, Star, Medal, Crown, Sparkles,
+  Trophy, Star, Medal, Crown, Sparkles, Copy, Check, ExternalLink
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -19,7 +27,7 @@ import {
 /* ─── Types ─── */
 type Period = "daily" | "weekly" | "monthly";
 
-interface TransactionItem { quantity: number; products: { name: string } | null; }
+interface TransactionItem { quantity: number; price_at_time: number; products: { name: string; price: number } | null; }
 interface Transaction {
   id: string;
   created_at: string;
@@ -130,7 +138,7 @@ function PeriodTabs({ value, onChange }: { value: Period; onChange: (p: Period) 
     { key: "monthly", label: "Bulanan" },
   ];
   return (
-    <div className="flex items-center border border-border/50 rounded-2xl overflow-hidden bg-foreground/[0.02] p-1 gap-1">
+    <div className="flex items-center border border-border rounded-2xl overflow-hidden bg-muted/40 p-1 gap-1">
       {tabs.map(t => (
         <button key={t.key} onClick={() => onChange(t.key)}
           className={`h-8 px-4 rounded-xl text-[11px] font-semibold transition-all ${
@@ -184,6 +192,10 @@ export default function ProfilePage() {
   const [showNew, setShowNew]         = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pwdLoading, setPwdLoading]   = useState(false);
+
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedTrx, setSelectedTrx]   = useState<Transaction | null>(null);
+  const [copiedId, setCopiedId]         = useState<string | null>(null);
 
   const [toast, setToast] = useState<Toast>(null);
   const showToast = (type: "success" | "error", msg: string) => {
@@ -239,7 +251,7 @@ export default function ProfilePage() {
         // Run all independent queries in parallel
         const [profRes, trxRes, leadRes] = await Promise.all([
           supabase.from("profiles").select("id, name, role, created_at").eq("id", uid).single(),
-          supabase.from("transactions").select("id, created_at, total_amount, payment_method, transaction_items(quantity, products(name))")
+          supabase.from("transactions").select("id, created_at, total_amount, payment_method, transaction_items(quantity, price_at_time, products(name, price))")
             .eq("staff_id", uid).gte("created_at", sixMonthsAgo.toISOString()).order("created_at", { ascending: false }),
           supabase.from("transactions").select("staff_id, total_amount").gte("created_at", rankingPeriod.toISOString())
         ]);
@@ -247,13 +259,18 @@ export default function ProfilePage() {
         if (profRes.data) setProfile(profRes.data as Profile);
 
         if (trxRes.data) {
-          const mapped: Transaction[] = (trxRes.data as any[]).map(t => ({
-            ...t,
-            transaction_items: (t.transaction_items || []).map((ti: any) => ({
-              ...ti,
-              products: Array.isArray(ti.products) ? ti.products[0] : ti.products
-            }))
-          }));
+          const mapped: Transaction[] = (trxRes.data as any[]).map(t => {
+            const items = (t.transaction_items || []).map((ti: any) => {
+              // PostgREST might return products as single object or array
+              const prod = Array.isArray(ti.products) ? ti.products[0] : ti.products;
+              return {
+                quantity: ti.quantity || 0,
+                price_at_time: ti.price_at_time || prod?.price || 0,
+                products: prod ? { name: prod.name, price: prod.price } : null
+              };
+            });
+            return { ...t, transaction_items: items };
+          });
           setAllTrx(mapped);
         }
 
@@ -292,6 +309,12 @@ export default function ProfilePage() {
     setPwdLoading(false);
     if (updateErr) { showToast("error", updateErr.message || "Gagal mengubah password."); }
     else { showToast("success", "Password berhasil diubah."); setCurrentPwd(""); setNewPwd(""); setConfirmPwd(""); }
+  };
+
+  const handleCopy = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   /* ── Derived stats ── */
@@ -342,7 +365,7 @@ export default function ProfilePage() {
         {/* Back button */}
         <Link href={profile?.role === "admin" ? "/dashboard" : "/kasir"}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
-          <div className="h-8 w-8 rounded-xl border border-border/40 flex items-center justify-center group-hover:bg-foreground/[0.05] transition-all">
+          <div className="h-8 w-8 rounded-xl border border-border flex items-center justify-center group-hover:bg-muted transition-all">
             <ArrowLeft className="h-3.5 w-3.5" />
           </div>
           <span className="text-xs font-semibold hidden sm:block">
@@ -368,8 +391,8 @@ export default function ProfilePage() {
           <span
             className={`h-7 px-3 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center border ${
               profile?.role === "admin"
-                ? "bg-primary/10 border-primary/20 text-primary"
-                : "bg-foreground/[0.04] border-border/40 text-muted-foreground"
+                ? "bg-primary/20 border-primary/40 text-primary"
+                : "bg-muted border-border text-muted-foreground"
             }`}
           >
             {profile?.role || "user"}
@@ -435,10 +458,10 @@ export default function ProfilePage() {
                 { label: "Transaksi QRIS", value: `${totalQris}×`, sub: "semua waktu" },
                 { label: "Transaksi Tunai", value: `${totalCash}×`, sub: "semua waktu" },
               ].map(s => (
-                <div key={s.label} className="rounded-xl border border-border/40 bg-foreground/[0.03] px-4 py-3">
+                <div key={s.label} className="rounded-xl border border-border bg-muted/30 px-4 py-3">
                   <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">{s.label}</p>
                   <p className="text-lg font-bold text-foreground tabular-nums mt-0.5">{s.value}</p>
-                  <p className="text-[9px] text-muted-foreground/40 mt-0.5">{s.sub}</p>
+                  <p className="text-[9px] text-muted-foreground/60 mt-0.5">{s.sub}</p>
                 </div>
               ))}
             </div>
@@ -479,7 +502,7 @@ export default function ProfilePage() {
                 </h3>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Pendapatan Anda dalam Rupiah</p>
               </div>
-              <span className="text-xs font-bold text-foreground/70 bg-foreground/[0.06] border border-border/40 rounded-lg px-2.5 py-1 tabular-nums">
+              <span className="text-xs font-bold text-foreground/90 bg-muted border border-border rounded-lg px-2.5 py-1 tabular-nums">
                 Rp {fmt(chartTotal)}
               </span>
             </div>
@@ -614,30 +637,31 @@ export default function ProfilePage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border/30">
-                    <th className="h-9 px-5 text-left text-[9px] font-semibold text-muted-foreground uppercase tracking-widest bg-foreground/[0.02]">Waktu</th>
-                    <th className="h-9 text-left text-[9px] font-semibold text-muted-foreground uppercase tracking-widest bg-foreground/[0.02]">Pesanan</th>
+                    <th className="h-9 px-5 text-left text-[9px] font-semibold text-muted-foreground uppercase tracking-widest bg-foreground/[0.02] w-[100px]">ID</th>
+                    <th className="h-9 text-left text-[9px] font-semibold text-muted-foreground uppercase tracking-widest bg-foreground/[0.02]">Waktu</th>
                     <th className="h-9 text-left text-[9px] font-semibold text-muted-foreground uppercase tracking-widest bg-foreground/[0.02]">Bayar</th>
-                    <th className="h-9 px-5 text-right text-[9px] font-semibold text-muted-foreground uppercase tracking-widest bg-foreground/[0.02]">Total</th>
+                    <th className="h-9 px-5 text-right text-[9px] font-semibold text-muted-foreground uppercase tracking-widest bg-foreground/[0.02]">Aksi/Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {allTrx.map(trx => (
-                    <tr key={trx.id} className="border-b border-border/20 hover:bg-foreground/[0.01] transition-colors group">
-                      <td className="px-5 py-3 text-[10px] text-muted-foreground whitespace-nowrap align-top">{formatDate(trx.created_at)}</td>
-                      <td className="py-3 max-w-[200px] align-top">
-                        <div className="space-y-0.5">
-                          {trx.transaction_items.map((ti, i) => (
-                            <p key={i} className="text-[10px] text-foreground/50 truncate group-hover:text-foreground transition-colors">
-                              {ti.quantity}× {ti.products?.name || "—"}
-                            </p>
-                          ))}
+                    <tr key={trx.id} className="border-b border-border/20 hover:bg-foreground/[0.01] transition-all group">
+                      <td className="px-5 py-3 align-top">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-[10px] text-muted-foreground/50 group-hover:text-foreground/50 transition-colors">
+                            #{trx.id.substring(0, 6).toUpperCase()}
+                          </span>
+                          <button onClick={() => handleCopy(trx.id)} className="h-5 w-5 rounded-md hover:bg-foreground/[0.08] flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
+                            {copiedId === trx.id ? <Check className="h-2.5 w-2.5 text-primary" /> : <Copy className="h-2.5 w-2.5 text-muted-foreground/40" />}
+                          </button>
                         </div>
                       </td>
+                      <td className="py-3 text-[10px] text-muted-foreground whitespace-nowrap align-top">{formatDate(trx.created_at)}</td>
                       <td className="py-3 align-top">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold border uppercase tracking-wide ${
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] font-bold border uppercase tracking-wide ${
                           trx.payment_method === "qris"
-                            ? "border-primary/20 text-primary bg-primary/10"
-                            : "border-border/40 text-muted-foreground/40 bg-transparent"
+                            ? "border-primary/40 text-primary bg-primary/20"
+                            : "border-border text-muted-foreground bg-muted"
                         }`}>
                           {trx.payment_method === "qris"
                             ? <><CreditCard className="h-2.5 w-2.5" /> QRIS</>
@@ -645,7 +669,15 @@ export default function ProfilePage() {
                         </span>
                       </td>
                       <td className="px-5 py-3 text-right align-top">
-                        <span className="text-xs font-bold text-foreground/75 tabular-nums">Rp {fmt(trx.total_amount)}</span>
+                        <div className="flex flex-col items-end gap-1.5">
+                          <span className="text-xs font-bold text-foreground/75 tabular-nums">Rp {fmt(trx.total_amount)}</span>
+                          <button
+                            onClick={() => { setSelectedTrx(trx); setIsDetailOpen(true); }}
+                            className="flex items-center gap-1 h-5 px-1.5 rounded-md border border-border bg-muted/80 text-[9px] font-bold text-muted-foreground hover:text-foreground hover:bg-muted transition-all opacity-0 group-hover:opacity-100 shadow-sm"
+                          >
+                            <ExternalLink className="h-2.5 w-2.5" /> Detail
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -679,7 +711,7 @@ export default function ProfilePage() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/30 pointer-events-none" />
                 <input type={showCurrent ? "text" : "password"} value={currentPwd} onChange={e => setCurrentPwd(e.target.value)}
                   placeholder="••••••••" required
-                  className="w-full h-10 pl-9 pr-10 bg-foreground/[0.03] border border-border/40 rounded-xl text-xs text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-foreground/20 transition-all" />
+                  className="w-full h-10 pl-9 pr-10 bg-muted/40 border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/40 transition-all" />
                 <button type="button" onClick={() => setShowCurrent(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-foreground transition-colors">
                   {showCurrent ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -694,7 +726,7 @@ export default function ProfilePage() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/30 pointer-events-none" />
                 <input type={showNew ? "text" : "password"} value={newPwd} onChange={e => setNewPwd(e.target.value)}
                   placeholder="••••••••" required
-                  className="w-full h-10 pl-9 pr-10 bg-foreground/[0.03] border border-border/40 rounded-xl text-xs text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-foreground/20 transition-all" />
+                  className="w-full h-10 pl-9 pr-10 bg-muted/40 border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/40 transition-all" />
                 <button type="button" onClick={() => setShowNew(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-foreground transition-colors">
                   {showNew ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -717,7 +749,7 @@ export default function ProfilePage() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/30 pointer-events-none" />
                 <input type={showConfirm ? "text" : "password"} value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)}
                   placeholder="••••••••" required
-                  className="w-full h-10 pl-9 pr-10 bg-foreground/[0.03] border border-border/40 rounded-xl text-xs text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-foreground/20 transition-all" />
+                  className="w-full h-10 pl-9 pr-10 bg-muted/40 border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/40 transition-all" />
                 <button type="button" onClick={() => setShowConfirm(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-foreground transition-colors">
                   {showConfirm ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -745,6 +777,68 @@ export default function ProfilePage() {
       </div>
 
       <ToastBanner toast={toast} onDismiss={() => setToast(null)} />
+
+      {/* ── Detail Modal ── */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-background/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-2xl">
+          <div className="p-6 space-y-5">
+            <DialogHeader>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`h-6 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.15em] flex items-center border ${
+                  selectedTrx?.payment_method === "qris" ? "bg-primary/20 border-primary/40 text-primary" : "bg-muted border-border text-muted-foreground"
+                }`}>
+                  {selectedTrx?.payment_method}
+                </span>
+                <span className="text-[10px] text-muted-foreground font-mono">#{selectedTrx?.id}</span>
+              </div>
+              <DialogTitle className="text-base font-bold text-foreground/90">Detail Transaksi</DialogTitle>
+              <p className="text-[10px] text-muted-foreground/50">{selectedTrx && formatDate(selectedTrx.created_at)}</p>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border bg-muted/30 overflow-hidden">
+                <div className="px-4 py-2 bg-muted/60 border-b border-border flex justify-between">
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Produk</span>
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Subtotal</span>
+                </div>
+                <div className="p-4 space-y-3">
+                  {selectedTrx?.transaction_items.map((ti, i) => {
+                    const price = Number(ti.price_at_time || 0);
+                    return (
+                      <div key={i} className="flex justify-between items-start">
+                        <div>
+                          <p className="text-xs font-bold text-foreground/70">{ti.products?.name || "Produk dihapus"}</p>
+                          <p className="text-[10px] text-muted-foreground/50">{ti.quantity} × Rp {fmt(price)}</p>
+                        </div>
+                        <span className="text-xs font-semibold text-foreground/80 tabular-nums">
+                          Rp {fmt(price * ti.quantity)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between px-2">
+                <span className="text-xs font-bold text-muted-foreground">Total Bayar</span>
+                <span className="text-xl font-black text-foreground tracking-tight">Rp {fmt(selectedTrx?.total_amount || 0)}</span>
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2">
+              <button
+                onClick={() => handleCopy(selectedTrx?.id || "")}
+                className="flex-1 h-10 rounded-xl border border-border text-[11px] font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-all flex items-center justify-center gap-2 shadow-sm"
+              >
+                {copiedId === selectedTrx?.id ? <><Check className="h-3.5 w-3.5" /> ID Tersalin</> : <><Copy className="h-3.5 w-3.5" /> Salin ID Transaksi</>}
+              </button>
+              <Button onClick={() => setIsDetailOpen(false)} className="flex-1 h-10 rounded-xl text-[11px] font-bold">
+                Tutup
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
