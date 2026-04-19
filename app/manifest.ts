@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next'
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'ICE HMJ Tekinfo',
-    short_name: 'ICE Tekinfo',
+    short_name: 'Danus',
     description: 'Sistem Kasir ICE HMJ Tekinfo',
     start_url: '/',
     display: 'standalone',

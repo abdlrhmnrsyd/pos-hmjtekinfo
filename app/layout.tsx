@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "ICE Tekinfo",
+    title: "Danus",
   },
   formatDetection: {
     telephone: false,
