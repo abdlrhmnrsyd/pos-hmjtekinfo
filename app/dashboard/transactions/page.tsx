@@ -3,13 +3,19 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { User, CreditCard, Banknote, Search, X, Download, Trash2 } from "lucide-react";
+import { User, CreditCard, Banknote, Search, X, Download, Trash2, Pencil } from "lucide-react";
+import { EditTransactionDialog } from "@/components/edit-transaction-dialog";
 
-interface TransactionItem { quantity: number; products: { name: string } | null; }
+interface TransactionItem {
+  product_id: string;
+  quantity: number;
+  price_at_time: number;
+  products: { name: string } | null;
+}
 interface StaffProfile   { name: string; }
 interface Transaction {
   id: string; created_at: string; total_amount: number;
-  payment_method: string; staff_id: string;
+  payment_method: string; staff_id: string; notes?: string;
   profiles: StaffProfile | null;
   transaction_items: TransactionItem[];
 }
@@ -20,15 +26,17 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState("");
-  const [filterMethod, setFilterMethod] = useState<"all" | "cash" | "qris">("all");
+  const [filterMethod, setFilterMethod] = useState<"all"| "cash" | "qris">("all");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const loadData = async () => {
     setLoading(true);
 
-    // Step 1: Fetch transactions (no FK join)
+    // Step 1: Fetch transactions
     const { data: trxRaw } = await supabase
       .from("transactions")
-      .select("id, created_at, total_amount, payment_method, staff_id, transaction_items(quantity, products(name))")
+      .select("id, created_at, total_amount, payment_method, staff_id, notes, transaction_items(product_id, quantity, price_at_time, products(name))")
       .order("created_at", { ascending: false });
 
     if (!trxRaw) { setLoading(false); return; }
@@ -304,14 +312,26 @@ export default function TransactionsPage() {
                 </TableCell>
 
                 {/* Aksi */}
-                <TableCell className="text-right px-5">
-                  <button
-                    onClick={() => deleteTransaction(trx.id)}
-                    className="h-7 w-7 rounded-lg text-muted-foreground/20 hover:text-red-400 hover:bg-red-400/10 flex items-center justify-center transition-colors border border-transparent hover:border-red-400/20"
-                    title="Hapus Transaksi"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
+                <TableCell className="text-right px-5 whitespace-nowrap">
+                  <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => {
+                        setSelectedTransaction(trx);
+                        setIsEditDialogOpen(true);
+                      }}
+                      className="h-7 w-7 rounded-lg text-muted-foreground/20 hover:text-primary hover:bg-primary/10 flex items-center justify-center transition-all border border-transparent hover:border-primary/20"
+                      title="Edit Transaksi"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => deleteTransaction(trx.id)}
+                      className="h-7 w-7 rounded-lg text-muted-foreground/20 hover:text-red-400 hover:bg-red-400/10 flex items-center justify-center transition-colors border border-transparent hover:border-red-400/20"
+                      title="Hapus Transaksi"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -328,6 +348,13 @@ export default function TransactionsPage() {
           </div>
         )}
       </div>
+
+      <EditTransactionDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        transaction={selectedTransaction}
+        onSuccess={loadData}
+      />
     </div>
   );
 }
