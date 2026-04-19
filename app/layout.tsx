@@ -4,6 +4,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { PWARegistration } from "@/components/pwa-registration";
 
 // Premium sans-serif — modern, geometric, high-end feel
 const jakarta = Plus_Jakarta_Sans({
@@ -22,10 +23,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ICE HMJ Tekinfo",
   description: "Sistem Kasir ICE HMJ Tekinfo",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ICE Tekinfo",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: "/logo.jpg",
     shortcut: "/logo.jpg",
-    apple: "/logo.jpg",
+    apple: "/icon-192.png",
   },
 };
 
@@ -48,6 +57,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider>{children}</TooltipProvider>
+          <PWARegistration />
         </ThemeProvider>
       </body>
     </html>
