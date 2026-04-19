@@ -194,12 +194,9 @@ export default function ProfilePage() {
   /* ── Bootstrap ── */
   useEffect(() => {
     (async () => {
-      // Small delay for re-hydration
-      await new Promise(r => setTimeout(r, 300));
-      
       let { data: { user } } = await supabase.auth.getUser();
 
-      // Fallback: Check for cookies if user is null (for cross-tab/browser restart)
+      // Fallback: Check for cookies if user is null
       if (!user) {
         const getCookie = (name: string) => {
           const value = `; ${document.cookie}`;
@@ -232,46 +229,50 @@ export default function ProfilePage() {
       setUserId(uid);
       setEmail(user.email || "");
 
-      const { data: prof } = await supabase
-        .from("profiles").select("id, name, role, created_at")
-        .eq("id", uid).single();
-      if (prof) setProfile(prof as Profile);
-
-      /* transactions: last 6 months */
+      // Setup time ranges
       const sixMonthsAgo = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      setTrxLoading(true);
-      const { data: trxRaw } = await supabase
-        .from("transactions")
-        .select("id, created_at, total_amount, payment_method, transaction_items(quantity, products(name))")
-        .eq("staff_id", uid)
-        .gte("created_at", sixMonthsAgo.toISOString())
-        .order("created_at", { ascending: false });
-      if (trxRaw) {
-        const mapped: Transaction[] = (trxRaw as any[]).map(t => ({
-          ...t,
-          transaction_items: (t.transaction_items || []).map((ti: any) => ({
-            ...ti,
-            products: Array.isArray(ti.products) ? ti.products[0] : ti.products
-          }))
-        }));
-        setAllTrx(mapped);
-      }
-      setTrxLoading(false);
+      const rankingPeriod = new Date(); rankingPeriod.setMonth(rankingPeriod.getMonth() - 3);
 
-      /* Leaderboard rank calculation */
-      const { data: allTotals } = await supabase.from("transactions").select("staff_id, total_amount");
-      if (allTotals) {
-        const staffRevenue = new Map<string, number>();
-        allTotals.forEach((t: any) => {
-          if (!t.staff_id) return;
-          staffRevenue.set(t.staff_id, (staffRevenue.get(t.staff_id) || 0) + t.total_amount);
-        });
-        const sortedLeaderboard = Array.from(staffRevenue.entries())
-          .sort((a, b) => b[1] - a[1]);
-        
-        const myRank = sortedLeaderboard.findIndex(([sid]) => sid === uid);
-        if (myRank !== -1) setRank(myRank + 1);
-        setTotalStaffCount(staffRevenue.size);
+      setTrxLoading(true);
+      
+      try {
+        // Run all independent queries in parallel
+        const [profRes, trxRes, leadRes] = await Promise.all([
+          supabase.from("profiles").select("id, name, role, created_at").eq("id", uid).single(),
+          supabase.from("transactions").select("id, created_at, total_amount, payment_method, transaction_items(quantity, products(name))")
+            .eq("staff_id", uid).gte("created_at", sixMonthsAgo.toISOString()).order("created_at", { ascending: false }),
+          supabase.from("transactions").select("staff_id, total_amount").gte("created_at", rankingPeriod.toISOString())
+        ]);
+
+        if (profRes.data) setProfile(profRes.data as Profile);
+
+        if (trxRes.data) {
+          const mapped: Transaction[] = (trxRes.data as any[]).map(t => ({
+            ...t,
+            transaction_items: (t.transaction_items || []).map((ti: any) => ({
+              ...ti,
+              products: Array.isArray(ti.products) ? ti.products[0] : ti.products
+            }))
+          }));
+          setAllTrx(mapped);
+        }
+
+        if (leadRes.data) {
+          const staffRevenue = new Map<string, number>();
+          leadRes.data.forEach((t: any) => {
+            if (!t.staff_id) return;
+            staffRevenue.set(t.staff_id, (staffRevenue.get(t.staff_id) || 0) + t.total_amount);
+          });
+          const sortedLeaderboard = Array.from(staffRevenue.entries()).sort((a, b) => b[1] - a[1]);
+          const myRank = sortedLeaderboard.findIndex(([sid]) => sid === uid);
+          if (myRank !== -1) setRank(myRank + 1);
+          setTotalStaffCount(staffRevenue.size);
+        }
+      } catch (err) {
+        console.error("Error fetching profile data:", err);
+      } finally {
+        setTrxLoading(false);
+        setLoading(false);
       }
     })();
   }, [router]);
