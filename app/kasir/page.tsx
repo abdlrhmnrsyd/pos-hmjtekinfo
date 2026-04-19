@@ -335,11 +335,11 @@ export default function KasirPage() {
   useEffect(() => {
     (async () => {
       // Small delay to allow Supabase to re-hydrate from localStorage
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 300));
 
       let { data: { user } } = await supabase.auth.getUser();
 
-      // Fallback: Check for cookies if user is null
+      // Fallback: Check for cookies if user is null (for cross-tab/browser restart)
       if (!user) {
         const getCookie = (name: string) => {
           const value = `; ${document.cookie}`;
@@ -351,16 +351,20 @@ export default function KasirPage() {
         const refresh = getCookie("sb-refresh-token");
 
         if (access && refresh) {
-          const { data: { session } } = await supabase.auth.setSession({
-            access_token: access,
-            refresh_token: refresh
-          });
-          user = session?.user ?? null;
+          try {
+            const { data } = await supabase.auth.setSession({
+              access_token: access,
+              refresh_token: refresh
+            });
+            user = data?.session?.user ?? null;
+          } catch (e) {
+            console.error("Session restoration failed:", e);
+          }
         }
       }
 
       if (!user) { 
-        router.push("/login"); 
+        router.replace("/login"); 
         return; 
       }
       
@@ -374,6 +378,7 @@ export default function KasirPage() {
       setLoading(false);
     })();
   }, [router]);
+
 
   const addToCart = useCallback((product: Product) =>
     setCart(prev => {

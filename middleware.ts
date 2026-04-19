@@ -39,6 +39,10 @@ export async function middleware(req: NextRequest) {
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
       })
+    } else {
+      // If tokens are present but invalid, clear them
+      res.cookies.delete('sb-access-token')
+      res.cookies.delete('sb-refresh-token')
     }
   }
 

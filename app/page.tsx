@@ -1,10 +1,53 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 
 export default function Home() {
+  const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      // Check for session to auto-redirect
+      let { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        const getCookie = (name: string) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(";").shift();
+        };
+        const access = getCookie("sb-access-token");
+        const refresh = getCookie("sb-refresh-token");
+
+        if (access && refresh) {
+          try {
+            const { data } = await supabase.auth.setSession({ access_token: access, refresh_token: refresh });
+            user = data?.session?.user ?? null;
+          } catch {}
+        }
+      }
+
+      if (user) {
+        router.replace("/kasir");
+        return;
+      }
+      setIsCheckingAuth(false);
+    })();
+  }, [router]);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background text-foreground overflow-hidden">
       

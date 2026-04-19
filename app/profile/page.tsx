@@ -194,19 +194,48 @@ export default function ProfilePage() {
   /* ── Bootstrap ── */
   useEffect(() => {
     (async () => {
-      const { data: authData } = await supabase.auth.getUser();
-      if (!authData.user) { router.replace("/login"); return; }
+      // Small delay for re-hydration
+      await new Promise(r => setTimeout(r, 300));
+      
+      let { data: { user } } = await supabase.auth.getUser();
 
-      const uid = authData.user.id;
+      // Fallback: Check for cookies if user is null (for cross-tab/browser restart)
+      if (!user) {
+        const getCookie = (name: string) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(";").shift();
+        };
+
+        const access = getCookie("sb-access-token");
+        const refresh = getCookie("sb-refresh-token");
+
+        if (access && refresh) {
+          try {
+            const { data } = await supabase.auth.setSession({
+              access_token: access,
+              refresh_token: refresh
+            });
+            user = data?.session?.user ?? null;
+          } catch (e) {
+            console.error("Profile session restoration failed:", e);
+          }
+        }
+      }
+
+      if (!user) { 
+        router.replace("/login"); 
+        return; 
+      }
+
+      const uid = user.id;
       setUserId(uid);
-      setEmail(authData.user.email || "");
+      setEmail(user.email || "");
 
       const { data: prof } = await supabase
         .from("profiles").select("id, name, role, created_at")
         .eq("id", uid).single();
       if (prof) setProfile(prof as Profile);
-
-      setLoading(false);
 
       /* transactions: last 6 months */
       const sixMonthsAgo = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);

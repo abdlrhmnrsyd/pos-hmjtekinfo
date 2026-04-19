@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { Loader2, IceCream } from "lucide-react";
@@ -12,6 +12,40 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      // Check if user is already logged in
+      let { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        const getCookie = (name: string) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(";").shift();
+        };
+
+        const access = getCookie("sb-access-token");
+        const refresh = getCookie("sb-refresh-token");
+
+        if (access && refresh) {
+          try {
+            const { data } = await supabase.auth.setSession({ access_token: access, refresh_token: refresh });
+            if (data?.session) user = data.session.user;
+          } catch (e) {
+            console.error("Auth redirect check failed:", e);
+          }
+        }
+      }
+
+      if (user) {
+        router.replace("/kasir");
+        return;
+      }
+      setIsCheckingAuth(false);
+    })();
+  }, [router]);
 
   const [showRegister, setShowRegister] = useState(false);
   const [regEmail, setRegEmail] = useState("");
@@ -76,6 +110,17 @@ export default function LoginPage() {
   };
 
   const inputClass = "w-full h-10 bg-background/50 border border-border/50 rounded-xl px-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-border transition-all";
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Verifikasi Sesi...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 relative overflow-hidden">

@@ -11,12 +11,12 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       // Small delay to allow Supabase to re-hydrate from localStorage
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 300));
 
       // 1. Cek auth
       let { data: { user } } = await supabase.auth.getUser();
       
-      // Fallback: Check if we have cookies but no user in memory
+      // Fallback: Check if we have cookies but no user in memory (browser restart)
       if (!user) {
         const getCookie = (name: string) => {
           const value = `; ${document.cookie}`;
@@ -28,11 +28,15 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         const refresh = getCookie("sb-refresh-token");
 
         if (access && refresh) {
-          const { data: { session } } = await supabase.auth.setSession({
-            access_token: access,
-            refresh_token: refresh
-          });
-          user = session?.user ?? null;
+          try {
+            const { data } = await supabase.auth.setSession({
+              access_token: access,
+              refresh_token: refresh
+            });
+            user = data?.session?.user ?? null;
+          } catch (e) {
+            console.error("AdminGuard session restoration failed:", e);
+          }
         }
       }
 

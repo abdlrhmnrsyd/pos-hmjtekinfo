@@ -108,10 +108,14 @@ export default function UsersPage() {
     const profileIds = profiles.map((p: any) => p.id);
 
     /* 2. Fetch all transactions */
-    const { data: trxRaw } = await supabase
-      .from("transactions")
-      .select("id, staff_id, total_amount, payment_method, created_at")
-      .in("staff_id", profileIds);
+    let trxRaw: any[] | null = null;
+    if (profileIds.length > 0) {
+      const { data } = await supabase
+        .from("transactions")
+        .select("id, staff_id, total_amount, payment_method, created_at")
+        .in("staff_id", profileIds);
+      trxRaw = data;
+    }
 
     /* 3. Aggregate per user */
     const trxMap = new Map<string, {
@@ -346,7 +350,7 @@ export default function UsersPage() {
           <TableBody>
             {loading ? (
               <TableRow className="border-border/10 hover:bg-transparent">
-                <TableCell colSpan={6} className="text-center h-40">
+                <TableCell colSpan={7} className="text-center h-40">
                   <div className="flex items-center justify-center gap-2">
                     <div className="h-3.5 w-3.5 border border-primary/20 border-t-primary rounded-full animate-spin" />
                     <span className="text-xs text-muted-foreground">Memuat data pengguna...</span>
@@ -355,7 +359,7 @@ export default function UsersPage() {
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow className="border-border/10 hover:bg-transparent">
-                <TableCell colSpan={6} className="text-center h-40">
+                <TableCell colSpan={7} className="text-center h-40">
                   <div className="flex flex-col items-center gap-2">
                     <Users className="h-6 w-6 text-foreground/5" />
                     <p className="text-xs text-muted-foreground/40">Tidak ada pengguna ditemukan.</p>
@@ -363,6 +367,7 @@ export default function UsersPage() {
                 </TableCell>
               </TableRow>
             ) : filtered.map(user => {
+
               const trxPct = Math.round((user.trxCount / maxTrx) * 100);
               const revPct = Math.round((user.trxTotal / maxRev) * 100);
               const rankEntry = [...users]
