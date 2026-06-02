@@ -770,6 +770,7 @@ export default function KasirPage() {
       <BarcodeScannerModal
         open={scannerOpen}
         onOpenChange={setScannerOpen}
+        products={products}
         onScan={(code) => {
           const matched = products.find(p => p.barcode === code);
           if (matched) {

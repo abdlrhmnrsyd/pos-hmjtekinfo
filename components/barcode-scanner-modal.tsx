@@ -7,18 +7,40 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Camera, X, RefreshCw, Volume2, VolumeX } from "lucide-react";
+import { Camera, X, RefreshCw, Volume2, VolumeX, CheckCircle, AlertTriangle } from "lucide-react";
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string;
+  barcode?: string | null;
+}
 
 interface BarcodeScannerModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onScan: (barcode: string) => void;
+  products: Product[];
 }
+
+interface ScannedHistoryItem {
+  id: string;
+  name: string;
+  price: number;
+  barcode: string;
+  timestamp: number;
+  status: "success" | "error";
+}
+
+let globalScannerInstance: any = null;
+let globalCleanupPromise: Promise<void> = Promise.resolve();
 
 export function BarcodeScannerModal({
   open,
   onOpenChange,
   onScan,
+  products,
 }: BarcodeScannerModalProps) {
   const [cameras, setCameras] = useState<any[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string>("");
@@ -26,13 +48,15 @@ export function BarcodeScannerModal({
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [scanCooldown, setScanCooldown] = useState<boolean>(false);
   const [lastScanned, setLastScanned] = useState<string>("");
+  const [scannedHistory, setScannedHistory] = useState<ScannedHistoryItem[]>([]);
+  const [isClosing, setIsClosing] = useState<boolean>(false);
 
   const scannerRef = useRef<any>(null);
   const containerId = "barcode-scanner-viewport";
   const isMounted = useRef<boolean>(true);
   const isTransitioning = useRef<boolean>(false);
 
-  // Play synthetic beep on scan success
+  // Play synthetic success beep (crisp high-pitched chime)
   const playBeep = () => {
     if (isMuted) return;
     try {
@@ -42,7 +66,7 @@ export function BarcodeScannerModal({
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(950, ctx.currentTime); // Crisp A5# frequency
+      osc.frequency.setValueAtTime(950, ctx.currentTime);
       gain.gain.setValueAtTime(0.08, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
       osc.connect(gain);
@@ -50,7 +74,29 @@ export function BarcodeScannerModal({
       osc.start();
       osc.stop(ctx.currentTime + 0.12);
     } catch (e) {
-      console.warn("Failed to play scanner beep:", e);
+      console.warn("Failed to play success beep:", e);
+    }
+  };
+
+  // Play synthetic error buzz (low pitch warning buzz)
+  const playErrorBuzz = () => {
+    if (isMuted) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(150, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.25);
+    } catch (e) {
+      console.warn("Failed to play error buzz:", e);
     }
   };
 
@@ -63,33 +109,51 @@ export function BarcodeScannerModal({
       // Clean up when modal closes
       if (scannerRef.current) {
         const scanner = scannerRef.current;
-        if (scanner.isScanning) {
-          isTransitioning.current = true;
-          scanner.stop().then(() => {
-            scanner.clear();
-            isTransitioning.current = false;
-          }).catch((err: any) => {
-            console.error(err);
-            isTransitioning.current = false;
-          });
-        }
         scannerRef.current = null;
+        globalCleanupPromise = (async () => {
+          try {
+            if (scanner.isScanning) {
+              await scanner.stop();
+            }
+            scanner.clear();
+          } catch (err: any) {
+            console.error("Cleanup on close error:", err);
+          } finally {
+            if (globalScannerInstance === scanner) {
+              globalScannerInstance = null;
+            }
+          }
+        })();
       }
       setErrorMsg("");
       setLastScanned("");
+      setScannedHistory([]);
+      setIsClosing(false);
       return;
     }
 
     const startScanner = async () => {
       try {
+        await globalCleanupPromise;
         const { Html5Qrcode } = await import("html5-qrcode");
         
         if (!isMounted.current) return;
 
-        // Check if container element exists
+        if (globalScannerInstance) {
+          const oldScanner = globalScannerInstance;
+          globalScannerInstance = null;
+          try {
+            if (oldScanner.isScanning) {
+              await oldScanner.stop();
+            }
+            oldScanner.clear();
+          } catch (e) {
+            console.error("Error clearing stale global scanner:", e);
+          }
+        }
+
         const el = document.getElementById(containerId);
         if (!el) {
-          // Retry in next frame if container is not rendered yet
           if (isMounted.current) {
             setTimeout(startScanner, 100);
           }
@@ -98,16 +162,15 @@ export function BarcodeScannerModal({
 
         const scanner = new Html5Qrcode(containerId);
         scannerRef.current = scanner;
+        globalScannerInstance = scanner;
         activeScanner = scanner;
 
-        // Get available cameras
         const devices = await Html5Qrcode.getCameras();
         if (!isMounted.current) return;
 
         if (devices && devices.length > 0) {
           setCameras(devices);
           
-          // Select default camera (prefer back/environment camera)
           const backCam = devices.find(d => 
             d.label.toLowerCase().includes("back") || 
             d.label.toLowerCase().includes("environment") ||
@@ -116,7 +179,6 @@ export function BarcodeScannerModal({
           const defaultCamId = backCam ? backCam.id : devices[0].id;
           setSelectedCameraId(defaultCamId);
           
-          // Start scanning
           await startScanningWithId(scanner, defaultCamId);
         } else {
           setErrorMsg("Kamera tidak ditemukan. Pastikan izin kamera telah diberikan.");
@@ -133,14 +195,22 @@ export function BarcodeScannerModal({
 
     return () => {
       isMounted.current = false;
-      if (activeScanner && activeScanner.isScanning) {
-        isTransitioning.current = true;
-        activeScanner.stop().then(() => {
-          isTransitioning.current = false;
-        }).catch((err: any) => {
-          console.error(err);
-          isTransitioning.current = false;
-        });
+      if (activeScanner) {
+        scannerRef.current = null;
+        globalCleanupPromise = (async () => {
+          try {
+            if (activeScanner.isScanning) {
+              await activeScanner.stop();
+            }
+            activeScanner.clear();
+          } catch (err: any) {
+            console.error("Cleanup on unmount error:", err);
+          } finally {
+            if (globalScannerInstance === activeScanner) {
+              globalScannerInstance = null;
+            }
+          }
+        })();
       }
     };
   }, [open]);
@@ -171,34 +241,62 @@ export function BarcodeScannerModal({
         {
           fps: 15,
           qrbox: (width: number, height: number) => {
-            // Responsive QR box overlay
             const size = Math.min(width, height) * 0.7;
-            return { width: size, height: size * 0.5 }; // wide for barcodes
+            return { width: size, height: size * 0.45 }; // wide layout for barcodes
           },
           aspectRatio: 1.0,
         },
         (decodedText: string) => {
           const now = Date.now();
-          // Cooldown of 2 seconds for the exact same barcode to prevent duplicate scans
-          if (decodedText === lastCode && now - lastTime < 2000) {
+          // Fast continuous scanning cooldown: 1000ms for exact same barcode, 0ms for different barcodes
+          if (decodedText === lastCode && now - lastTime < 1000) {
             return;
           }
           
           lastCode = decodedText;
           lastTime = now;
           
-          playBeep();
           setLastScanned(decodedText);
-          onScan(decodedText);
+          
+          // Match against products list to log in real-time history
+          const matched = products.find(p => p.barcode === decodedText);
+          if (matched) {
+            playBeep();
+            setScannedHistory(prev => [
+              {
+                id: matched.id,
+                name: matched.name,
+                price: matched.price,
+                barcode: decodedText,
+                timestamp: now,
+                status: "success"
+              },
+              ...prev
+            ]);
+            onScan(decodedText);
+          } else {
+            playErrorBuzz();
+            setScannedHistory(prev => [
+              {
+                id: Math.random().toString(),
+                name: "Produk Tidak Dikenal",
+                price: 0,
+                barcode: decodedText,
+                timestamp: now,
+                status: "error"
+              },
+              ...prev
+            ]);
+          }
 
-          // Flash scanner effect
+          // Trigger screen scan flash effect
           setScanCooldown(true);
           setTimeout(() => {
             if (isMounted.current) setScanCooldown(false);
-          }, 800);
+          }, 400);
         },
         () => {
-          // Verbose scan error, safe to ignore
+          // Scanner read errors, safe to ignore
         }
       );
     } catch (err) {
@@ -220,42 +318,74 @@ export function BarcodeScannerModal({
     }
   };
 
+  // Safe asynchronous close function to prevent unmount crashes
+  const handleClose = async () => {
+    if (isClosing) return;
+    setIsClosing(true);
+    
+    if (scannerRef.current) {
+      const scanner = scannerRef.current;
+      scannerRef.current = null;
+      try {
+        if (scanner.isScanning) {
+          await scanner.stop();
+        }
+        scanner.clear();
+      } catch (e) {
+        console.error("Error stopping scanner during manual close:", e);
+      } finally {
+        globalScannerInstance = null;
+      }
+    }
+    
+    setIsClosing(false);
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden bg-background/95 backdrop-blur-2xl border-border/50 shadow-2xl rounded-3xl">
-        <form className="p-6 flex flex-col items-center">
+    <Dialog open={open} onOpenChange={(val) => { if (!val) handleClose(); }}>
+      <DialogContent 
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        className="sm:max-w-[450px] p-0 overflow-hidden bg-background/95 backdrop-blur-2xl border-border/50 shadow-2xl rounded-3xl"
+      >
+        <div className="p-6 flex flex-col items-center">
           <DialogHeader className="w-full text-center relative">
             <DialogTitle className="text-sm font-bold text-foreground/90 flex items-center justify-center gap-2">
               <Camera className="h-4 w-4 text-primary" />
-              Scan Barcode Produk
+              Scan Barcode Berlanjut
             </DialogTitle>
-            <p className="text-[10px] text-muted-foreground/60">Posisikan barcode produk di dalam area kotak pemindai.</p>
+            <p className="text-[10px] text-muted-foreground/60">Arahkan kamera ke barcode produk. Anda dapat melakukan scan berulang kali.</p>
           </DialogHeader>
 
           {/* Scanner Viewport Box */}
-          <div className="relative w-full aspect-video sm:aspect-square bg-black border border-border/40 rounded-2xl overflow-hidden mt-5 shadow-inner flex items-center justify-center">
+          <div className="relative w-full aspect-video bg-black border border-border/40 rounded-2xl overflow-hidden mt-4 shadow-inner flex items-center justify-center">
             
-            {/* Native viewport div container for html5-qrcode */}
             <div id={containerId} className="w-full h-full object-cover [&>video]:object-cover" />
 
             {/* Glowing laser line & Scan frame overlay */}
-            {!errorMsg && cameras.length > 0 && (
+            {!errorMsg && cameras.length > 0 && !isClosing && (
               <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-                {/* Visual Scanner Area Box */}
-                <div className={`w-[70%] h-[35%] border-2 border-primary/60 rounded-xl relative transition-all duration-300 ${
+                <div className={`w-[75%] h-[40%] border-2 border-primary/50 rounded-xl relative transition-all duration-300 ${
                   scanCooldown ? "bg-primary/20 scale-[1.03] border-emerald-400" : "bg-transparent"
                 }`}>
-                  {/* Corner styling */}
                   <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary -translate-x-[2px] -translate-y-[2px] rounded-tl-md" />
                   <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-primary translate-x-[2px] -translate-y-[2px] rounded-tr-md" />
                   <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-primary -translate-x-[2px] translate-y-[2px] rounded-bl-md" />
                   <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary translate-x-[2px] translate-y-[2px] rounded-br-md" />
 
-                  {/* Animated laser line */}
                   <div className={`w-full h-[2px] bg-primary shadow-[0_0_10px_#ea580c] absolute left-0 ${
                     scanCooldown ? "hidden" : "animate-scanner-laser"
                   }`} />
                 </div>
+              </div>
+            )}
+
+            {/* Closing Screen */}
+            {isClosing && (
+              <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center z-10 gap-3">
+                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                <p className="text-[10px] text-muted-foreground/60 font-semibold tracking-wider uppercase">Menutup Kamera...</p>
               </div>
             )}
 
@@ -268,7 +398,7 @@ export function BarcodeScannerModal({
                   type="button"
                   onClick={() => {
                     setErrorMsg("");
-                    onOpenChange(true); // Retrigger useEffect by reloading
+                    onOpenChange(true);
                   }}
                   className="mt-4 h-8 px-4 rounded-xl bg-muted border border-border text-[10px] font-semibold text-foreground/70 hover:bg-accent transition-all"
                 >
@@ -286,24 +416,52 @@ export function BarcodeScannerModal({
             )}
           </div>
 
-          {/* Scanned Feedback info */}
-          {lastScanned && (
-            <div className="w-full mt-4 p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
-              <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-none">Terbaca</p>
-              <p className="text-xs font-mono font-bold text-foreground/90 mt-1">{lastScanned}</p>
+          {/* Real-time Scanned History List */}
+          <div className="w-full mt-4 flex flex-col">
+            <span className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-widest mb-1.5">Riwayat Scan Sesi Ini</span>
+            <div className="w-full max-h-[110px] overflow-y-auto border border-border/40 rounded-xl bg-muted/20 divide-y divide-border/20 custom-scrollbar p-1.5 space-y-1">
+              {scannedHistory.length === 0 ? (
+                <div className="py-6 text-center text-[10px] text-muted-foreground/30 italic">
+                  Arahkan ke barcode produk untuk mulai scan
+                </div>
+              ) : (
+                scannedHistory.map((item) => (
+                  <div key={item.timestamp + item.id} className="flex items-center justify-between p-2 rounded-lg bg-background/40 hover:bg-background/80 transition-colors animate-fade-in">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {item.status === "success" ? (
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                      )}
+                      <div className="min-w-0">
+                        <p className={`text-xs font-bold truncate ${item.status === "success" ? "text-foreground/80" : "text-amber-500/80"}`}>
+                          {item.name}
+                        </p>
+                        <p className="text-[8px] font-mono text-muted-foreground/50">{item.barcode}</p>
+                      </div>
+                    </div>
+                    {item.status === "success" && (
+                      <span className="text-[10px] font-bold text-foreground/75 tabular-nums pl-2">
+                        Rp {item.price.toLocaleString("id-ID")}
+                      </span>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
-          )}
+          </div>
 
           {/* Controls Footer */}
-          <div className="w-full mt-5 flex items-center justify-between gap-3 bg-muted/30 p-2.5 rounded-xl border border-border/40">
+          <div className="w-full mt-4 flex items-center justify-between gap-3 bg-muted/30 p-2.5 rounded-xl border border-border/40">
             {/* Camera Select dropdown */}
             {cameras.length > 1 ? (
               <div className="flex items-center gap-1.5 flex-1 min-w-0">
                 <RefreshCw className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <select
                   value={selectedCameraId}
+                  disabled={isClosing}
                   onChange={(e) => handleCameraChange(e.target.value)}
-                  className="bg-transparent border-0 text-[10px] font-semibold text-muted-foreground/90 outline-none flex-1 truncate cursor-pointer"
+                  className="bg-transparent border-0 text-[10px] font-semibold text-muted-foreground/90 outline-none flex-1 truncate cursor-pointer disabled:opacity-50"
                 >
                   {cameras.map((cam) => (
                     <option key={cam.id} value={cam.id} className="bg-popover text-foreground text-xs">
@@ -314,15 +472,16 @@ export function BarcodeScannerModal({
               </div>
             ) : (
               <div className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wider pl-1.5">
-                {cameras.length === 1 ? "1 Kamera Aktif" : "Menunggu Izin"}
+                {cameras.length === 1 ? "Kamera Aktif" : "Menunggu Izin"}
               </div>
             )}
 
             {/* Mute button */}
             <button
               type="button"
+              disabled={isClosing}
               onClick={() => setIsMuted(!isMuted)}
-              className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-foreground/[0.05] transition-all border border-border/20 text-muted-foreground/80"
+              className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-foreground/[0.05] transition-all border border-border/20 text-muted-foreground/80 disabled:opacity-50"
               title={isMuted ? "Bunyikan Suara" : "Bisukan Suara"}
             >
               {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
@@ -331,13 +490,14 @@ export function BarcodeScannerModal({
             {/* Cancel Button */}
             <button
               type="button"
-              onClick={() => onOpenChange(false)}
-              className="h-8 px-4 rounded-lg bg-foreground/[0.04] hover:bg-foreground/[0.08] text-[10px] font-bold text-foreground/80 transition-all uppercase tracking-wider"
+              disabled={isClosing}
+              onClick={handleClose}
+              className="h-8 px-4 rounded-lg bg-foreground/[0.04] hover:bg-foreground/[0.08] text-[10px] font-bold text-foreground/80 transition-all uppercase tracking-wider disabled:opacity-50"
             >
               Tutup
             </button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

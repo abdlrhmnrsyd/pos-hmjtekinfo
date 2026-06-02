@@ -73,11 +73,21 @@ export default function TransactionsPage() {
   
   const deleteTransaction = async (id: string) => {
     if (!confirm("Yakin ingin menghapus transaksi ini? Tindakan ini tidak bisa dibatalkan.")) return;
+    
+    // Step 1: Delete associated items first to satisfy foreign key constraint
+    const { error: itemsError } = await supabase.from("transaction_items").delete().eq("transaction_id", id);
+    if (itemsError) {
+      alert(`Gagal menghapus detail transaksi: ${itemsError.message}`);
+      return;
+    }
+
+    // Step 2: Delete transaction header
     const { error } = await supabase.from("transactions").delete().eq("id", id);
     if (error) {
       alert(`Gagal menghapus transaksi: ${error.message}`);
       return;
     }
+    
     loadData();
   };
 
