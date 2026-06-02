@@ -345,8 +345,8 @@ export function BarcodeScannerModal({
   return (
     <Dialog 
       open={open} 
-      onOpenChange={(val, event, reason) => {
-        if (reason === "outside-press" || reason === "escape-key") {
+      onOpenChange={(val, eventDetails) => {
+        if (eventDetails.reason === "outside-press" || eventDetails.reason === "escape-key") {
           return;
         }
         if (!val) handleClose();
