@@ -442,7 +442,7 @@ export default function KasirPage() {
             e.preventDefault();
             e.stopPropagation();
             
-            // Soft scan success feedback beep
+            // Soft scan success feedback beep (Standard 1000Hz retail beep)
             try {
               const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
               if (AudioCtx) {
@@ -450,13 +450,13 @@ export default function KasirPage() {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.type = "sine";
-                osc.frequency.setValueAtTime(950, ctx.currentTime);
-                gain.gain.setValueAtTime(0.08, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+                osc.frequency.setValueAtTime(1000, ctx.currentTime);
+                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
                 osc.connect(gain);
                 gain.connect(ctx.destination);
                 osc.start();
-                osc.stop(ctx.currentTime + 0.12);
+                osc.stop(ctx.currentTime + 0.18);
               }
             } catch (err) {
               console.warn(err);

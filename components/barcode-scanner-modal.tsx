@@ -66,13 +66,13 @@ export function BarcodeScannerModal({
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(950, ctx.currentTime);
-      gain.gain.setValueAtTime(0.08, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(1000, ctx.currentTime); // Standard 1000Hz retail beep
+      gain.gain.setValueAtTime(0.25, ctx.currentTime); // Louder volume
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18); // 180ms duration
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
-      osc.stop(ctx.currentTime + 0.12);
+      osc.stop(ctx.currentTime + 0.18);
     } catch (e) {
       console.warn("Failed to play success beep:", e);
     }
@@ -241,15 +241,16 @@ export function BarcodeScannerModal({
         {
           fps: 15,
           qrbox: (width: number, height: number) => {
-            const size = Math.min(width, height) * 0.7;
-            return { width: size, height: size * 0.45 }; // wide layout for barcodes
+            const boxWidth = width * 0.85;
+            const boxHeight = height * 0.55;
+            return { width: boxWidth, height: boxHeight };
           },
           aspectRatio: 1.0,
         },
         (decodedText: string) => {
           const now = Date.now();
-          // Fast continuous scanning cooldown: 1000ms for exact same barcode, 0ms for different barcodes
-          if (decodedText === lastCode && now - lastTime < 1000) {
+          // Continuous scanning cooldown: 2000ms for exact same barcode to prevent double scanning
+          if (decodedText === lastCode && now - lastTime < 2000) {
             return;
           }
           
@@ -372,7 +373,7 @@ export function BarcodeScannerModal({
             {/* Glowing laser line & Scan frame overlay */}
             {!errorMsg && cameras.length > 0 && !isClosing && (
               <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-                <div className={`w-[75%] h-[40%] border-2 border-primary/50 rounded-xl relative transition-all duration-300 ${
+                <div className={`w-[85%] h-[55%] border-2 border-primary/50 rounded-xl relative transition-all duration-300 ${
                   scanCooldown ? "bg-primary/20 scale-[1.03] border-emerald-400" : "bg-transparent"
                 }`}>
                   <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary -translate-x-[2px] -translate-y-[2px] rounded-tl-md" />
