@@ -343,10 +343,16 @@ export function BarcodeScannerModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => { if (!val) handleClose(); }}>
+    <Dialog 
+      open={open} 
+      onOpenChange={(val, event, reason) => {
+        if (reason === "outside-press" || reason === "escape-key") {
+          return;
+        }
+        if (!val) handleClose();
+      }}
+    >
       <DialogContent 
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
         className="sm:max-w-[450px] p-0 overflow-hidden bg-background/95 backdrop-blur-2xl border-border/50 shadow-2xl rounded-3xl"
       >
         <div className="p-6 flex flex-col items-center">
