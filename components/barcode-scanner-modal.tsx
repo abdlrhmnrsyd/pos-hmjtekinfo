@@ -233,7 +233,6 @@ export function BarcodeScannerModal({
         return;
       }
       
-      let lastCode = "";
       let lastTime = 0;
 
       await scanner.start(
@@ -249,12 +248,11 @@ export function BarcodeScannerModal({
         },
         (decodedText: string) => {
           const now = Date.now();
-          // Continuous scanning cooldown: 2000ms for exact same barcode to prevent double scanning
-          if (decodedText === lastCode && now - lastTime < 2000) {
+          // Global cooldown: wait 2 seconds (2000ms) after ANY scan before accepting the next barcode
+          if (now - lastTime < 2000) {
             return;
           }
           
-          lastCode = decodedText;
           lastTime = now;
           
           setLastScanned(decodedText);
@@ -290,11 +288,11 @@ export function BarcodeScannerModal({
             ]);
           }
 
-          // Trigger screen scan flash effect
+          // Trigger screen scan flash effect (lasts for the 2-second cooldown period)
           setScanCooldown(true);
           setTimeout(() => {
             if (isMounted.current) setScanCooldown(false);
-          }, 400);
+          }, 2000);
         },
         () => {
           // Scanner read errors, safe to ignore
