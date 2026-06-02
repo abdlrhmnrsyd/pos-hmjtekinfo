@@ -6,14 +6,16 @@ import { useRouter } from "next/navigation";
 import {
   ShoppingCart, Plus, Minus, Trash2, LogOut,
   CreditCard, Banknote, Search, CheckCircle2,
-  IceCream, X, Receipt, ChevronRight, LayoutDashboard, UserCircle,
+  IceCream, X as XIcon, Receipt, ChevronRight, LayoutDashboard, UserCircle,
+  Scan, XCircle
 } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BarcodeScannerModal } from "@/components/barcode-scanner-modal";
 
 /* ─── Types ─── */
-type Product  = { id: string; name: string; price: number; image_url: string };
+type Product  = { id: string; name: string; price: number; image_url: string; barcode?: string | null };
 type CartItem = Product & { quantity: number };
 type PayMethod = "cash" | "qris";
 type DrawerView = "cart" | "payment" | "success";
@@ -206,7 +208,7 @@ function CartDrawer({
                   )}
                   <button onClick={onClose}
                     className="h-7 w-7 flex items-center justify-center rounded-xl text-muted-foreground/25 hover:text-foreground/70 hover:bg-foreground/[0.06] transition-all">
-                    <X className="h-4 w-4" />
+                    <XIcon className="h-4 w-4" />
                   </button>
                 </div>
               </div>
@@ -329,6 +331,13 @@ export default function KasirPage() {
   const [drawerOpen, setDrawerOpen]   = useState(false);
   const [isAdmin, setIsAdmin]         = useState(false);
   const [now, setNow] = useState(new Date());
+  
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const showToast = (type: "success" | "error", msg: string) => {
+    setToast({ type, msg });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
 
@@ -379,7 +388,6 @@ export default function KasirPage() {
     })();
   }, [router]);
 
-
   const addToCart = useCallback((product: Product) =>
     setCart(prev => {
       const ex = prev.find(i => i.id === product.id);
@@ -392,6 +400,83 @@ export default function KasirPage() {
 
   const removeItem  = useCallback((id: string) => setCart(prev => prev.filter(i => i.id !== id)), []);
   const clearCart   = useCallback(() => setCart([]), []);
+
+  // Keyboard barcode scanner listener (captures rapid typing of scanners)
+  useEffect(() => {
+    let buffer = "";
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is inside a form input/textarea that is NOT the main search input
+      const activeEl = document.activeElement;
+      if (activeEl && activeEl.tagName === "INPUT" && activeEl.id !== "cashier-search-input") {
+        return;
+      }
+      if (activeEl && activeEl.tagName === "TEXTAREA") {
+        return;
+      }
+
+      // Ignore modifier keys, functional keys, etc.
+      if (e.key.length > 1 && e.key !== "Enter") {
+        return;
+      }
+
+      const now = Date.now();
+      const isSearchInputFocused = activeEl && activeEl.id === "cashier-search-input";
+      
+      // If typing speed is slower than 50ms, it is human typing. Clear buffer (unless focused in search input)
+      if (!isSearchInputFocused && now - lastKeyTime > 50) {
+        buffer = "";
+      }
+      lastKeyTime = now;
+
+      if (e.key === "Enter") {
+        const code = isSearchInputFocused ? searchQuery.trim() : buffer.trim();
+        if (code.length >= 3) {
+          const matched = products.find(p => p.barcode === code);
+          if (matched) {
+            addToCart(matched);
+            showToast("success", `Menambahkan "${matched.name}" ke keranjang.`);
+            setSearchQuery("");
+            buffer = "";
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Soft scan success feedback beep
+            try {
+              const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+              if (AudioCtx) {
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(950, ctx.currentTime);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.12);
+              }
+            } catch (err) {
+              console.warn(err);
+            }
+          } else if (isSearchInputFocused) {
+            // If they typed in search and hit Enter but it doesn't match a barcode, 
+            // we let the normal text filtering work (no preventDefault)
+          }
+        }
+        buffer = "";
+      } else {
+        if (!isSearchInputFocused) {
+          buffer += e.key;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [products, addToCart, searchQuery]);
 
   const totalItems  = cart.reduce((s, i) => s + i.quantity, 0);
   const totalAmount = cart.reduce((s, i) => s + i.price * i.quantity, 0);
@@ -522,20 +607,33 @@ export default function KasirPage() {
           <h2 className="text-base font-black text-primary uppercase tracking-tight">Pilih Menu</h2>
           <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest mt-0.5">{products.length} produk tersedia</p>
         </div>
-        <div className="relative group min-w-[200px] sm:min-w-[260px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40 group-focus-within:text-foreground/50 transition-colors pointer-events-none" />
-          <input
-            placeholder="Cari produk..."
-            className="w-full h-9 pl-8 pr-8 bg-muted/50 border border-border rounded-xl text-xs text-foreground focus:border-primary/50 transition-all"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-foreground/60 transition-colors">
-              <X className="h-3 w-3" />
-            </button>
-          )}
+        <div className="relative group min-w-[200px] sm:min-w-[260px] flex items-center">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40 group-focus-within:text-foreground/50 transition-colors pointer-events-none" />
+            <input
+              id="cashier-search-input"
+              placeholder="Cari atau scan produk..."
+              className="w-full h-9 pl-8 pr-16 bg-muted/50 border border-border rounded-xl text-xs text-foreground focus:border-primary/50 transition-all"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+              {searchQuery && (
+                <button type="button" onClick={() => setSearchQuery("")}
+                  className="text-muted-foreground/40 hover:text-foreground/60 transition-colors p-1">
+                  <XIcon className="h-3 w-3" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setScannerOpen(true)}
+                className="text-primary hover:text-primary/80 transition-colors p-1 hover:bg-primary/10 rounded-lg flex items-center justify-center"
+                title="Scan Barcode Kamera"
+              >
+                <Scan className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -668,6 +766,33 @@ export default function KasirPage() {
         onCheckout={handleCheckout}
         isProcessing={isProcessing}
       />
+
+      <BarcodeScannerModal
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        onScan={(code) => {
+          const matched = products.find(p => p.barcode === code);
+          if (matched) {
+            addToCart(matched);
+            showToast("success", `Menambahkan "${matched.name}" ke keranjang.`);
+          } else {
+            showToast("error", `Produk dengan barcode "${code}" tidak ditemukan.`);
+          }
+        }}
+      />
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl bg-popover/95 backdrop-blur-md animate-fade-in"
+          style={{
+            border: toast.type === "success" ? "1px solid var(--border)" : "1px solid var(--destructive)",
+          }}>
+          {toast.type === "success"
+            ? <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+            : <XCircle className="h-4 w-4 text-destructive shrink-0" />}
+          <span className="text-xs font-semibold text-foreground/75">{toast.msg}</span>
+          <button onClick={() => setToast(null)} className="ml-2 text-muted-foreground hover:text-foreground text-xs">✕</button>
+        </div>
+      )}
     </div>
   );
 }

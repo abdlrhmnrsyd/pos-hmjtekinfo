@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-interface Product { id: string; name: string; price: number; image_url: string; is_active: boolean; }
+interface Product { id: string; name: string; price: number; image_url: string; is_active: boolean; barcode?: string | null; }
 
 const surface = "rounded-2xl border border-border/50 bg-card/50";
 const inputCls = "w-full h-10 bg-foreground/[0.03] border border-border/40 rounded-xl px-3.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-foreground/20 transition-all";
@@ -21,7 +21,7 @@ export default function ProductsPage() {
   const [loading, setLoading]   = useState(true);
   const [isOpen, setIsOpen]     = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: "", price: 0, image_url: "" });
+  const [formData, setFormData] = useState({ name: "", price: 0, image_url: "", barcode: "" });
   const [saving, setSaving]     = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
@@ -51,8 +51,8 @@ export default function ProductsPage() {
     fetchProducts();
   };
 
-  const handleOpenCreate = () => { setEditingId(null); setFormData({ name: "", price: 0, image_url: "" }); setImageFile(null); setImagePreviewUrl(""); setIsOpen(true); };
-  const handleOpenEdit   = (p: Product) => { setEditingId(p.id); setFormData({ name: p.name, price: p.price, image_url: p.image_url || "" }); setImageFile(null); setImagePreviewUrl(""); setIsOpen(true); };
+  const handleOpenCreate = () => { setEditingId(null); setFormData({ name: "", price: 0, image_url: "", barcode: "" }); setImageFile(null); setImagePreviewUrl(""); setIsOpen(true); };
+  const handleOpenEdit   = (p: Product) => { setEditingId(p.id); setFormData({ name: p.name, price: p.price, image_url: p.image_url || "", barcode: p.barcode || "" }); setImageFile(null); setImagePreviewUrl(""); setIsOpen(true); };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); if (saving) return; setSaving(true);
@@ -68,7 +68,7 @@ export default function ProductsPage() {
         finalImageUrl = urlData.publicUrl;
         setUploadingImage(false);
       }
-      const payload = { name: formData.name, price: formData.price, image_url: finalImageUrl };
+      const payload = { name: formData.name, price: formData.price, image_url: finalImageUrl, barcode: formData.barcode || null };
       const { error } = editingId
         ? await supabase.from("products").update(payload).eq("id", editingId)
         : await supabase.from("products").insert([payload]);
@@ -103,6 +103,7 @@ export default function ProductsPage() {
             <TableRow className="border-border/30 hover:bg-transparent">
               <TableHead className="h-10 px-5 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest w-[60px]">Foto</TableHead>
               <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Nama</TableHead>
+              <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Barcode</TableHead>
               <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Harga</TableHead>
               <TableHead className="h-10 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Status</TableHead>
               <TableHead className="h-10 text-right px-5 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Aksi</TableHead>
@@ -133,6 +134,7 @@ export default function ProductsPage() {
                   </div>
                 </TableCell>
                 <TableCell className="text-sm font-medium text-foreground/70">{p.name}</TableCell>
+                <TableCell className="text-xs font-mono text-muted-foreground/65">{p.barcode || "-"}</TableCell>
                 <TableCell className="text-sm font-semibold text-foreground/80">Rp {p.price.toLocaleString("id-ID")}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border ${
@@ -180,6 +182,10 @@ export default function ProductsPage() {
               <div className="space-y-1.5">
                 <label className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Nama Produk</label>
                 <input className={inputCls} required placeholder="Contoh: Vanilla Dream" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Barcode / SKU</label>
+                <input className={inputCls} placeholder="Contoh: 8997009516084" value={formData.barcode} onChange={e => setFormData({ ...formData, barcode: e.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Harga (Rp)</label>
